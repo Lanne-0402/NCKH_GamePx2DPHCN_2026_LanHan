@@ -1,0 +1,2 @@
+# NCKH_GamePx2DPHCN_2026_LanHan
+Repo chứa mã nguồn dự án của Game pixel 2D giúp phục hồi chức năng cho bệnh nhân sau điều trị nằm trong phạm vi Nghiên cứu khoa học với đề tài Nghiên cứu phát triển ứng dụng game Pixel 2D tích hợp trí tuệ nhân tạo nhận diện cử động cánh tay hỗ trợ tập luyện phục hồi chức năng thực hiện bởi Nông Thị Hồng Lan(Chủ trì) và Nguyễn Ngọc Gia Hân.
