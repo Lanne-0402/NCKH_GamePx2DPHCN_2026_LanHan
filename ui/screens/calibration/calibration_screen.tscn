@@ -1,0 +1,148 @@
+[gd_scene format=3 uid="uid://bnbcr4vedbawh"]
+
+[ext_resource type="Script" uid="uid://bhisriemq3x4x" path="res://ui/screens/calibration/calibration_screen.gd" id="1_7kyun"]
+
+[node name="CalibrationScreen" type="Control" unique_id=1859790811]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7kyun")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=681766131]
+layout_mode = 0
+offset_left = 15.0
+offset_top = -4.0
+offset_right = 1167.0
+offset_bottom = 640.0
+
+[node name="BackButton" type="Button" parent="ColorRect" unique_id=948372501]
+layout_mode = 0
+offset_left = 85.0
+offset_top = 50.0
+offset_right = 189.0
+offset_bottom = 86.0
+theme_override_font_sizes/font_size = 20
+text = "< Quay lại"
+
+[node name="Label" type="Label" parent="." unique_id=315951870]
+layout_mode = 0
+offset_left = 373.0
+offset_top = 35.0
+offset_right = 766.0
+offset_bottom = 80.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "Khung hiển thị Camera AI"
+
+[node name="ColorRect2" type="ColorRect" parent="." unique_id=457090437]
+layout_mode = 0
+offset_left = 253.0
+offset_top = 91.0
+offset_right = 893.0
+offset_bottom = 571.0
+color = Color(0.6412939, 0.5662366, 0.6030983, 1)
+
+[node name="Introduce" type="Label" parent="." unique_id=2105289120]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 281.0
+offset_right = 806.0
+offset_bottom = 342.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 17
+text = "Hãy lùi lại để camera thấy 3/4 cơ thể bạn. 
+Khi đã sẵn sàng, hãy thực hiện động tác tối đa và giữ trong 5 giây."
+
+[node name="Label2" type="Label" parent="." unique_id=475596303]
+layout_mode = 0
+offset_left = 271.0
+offset_top = 108.0
+offset_right = 530.0
+offset_bottom = 131.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "BƯỚC ĐỆM: HIỆU CHỈNH BIÊN ĐỘ"
+
+[node name="ProgressBar" type="ProgressBar" parent="." unique_id=48994321]
+layout_mode = 0
+offset_left = 751.0
+offset_top = 196.0
+offset_right = 863.0
+offset_bottom = 223.0
+max_value = 100.0
+show_percentage = true
+
+[node name="StartCalibButton" type="Button" parent="." unique_id=715200943]
+layout_mode = 0
+offset_left = 489.0
+offset_top = 453.0
+offset_right = 627.0
+offset_bottom = 484.0
+text = "BẮT ĐẦU ĐO"
+
+[node name="NextButton" type="Button" parent="." unique_id=972049777]
+layout_mode = 0
+offset_left = 488.0
+offset_top = 502.0
+offset_right = 626.0
+offset_bottom = 533.0
+disabled = true
+text = "VÀO GAME"
+
+[node name="PoseStatusPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 905.0
+offset_top = 91.0
+offset_right = 1140.0
+offset_bottom = 302.0
+
+[node name="MarginContainer" type="MarginContainer" parent="PoseStatusPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PoseStatusPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Title" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
+text = "POSE DEBUG"
+
+[node name="ConnectionLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Backend: Đang kiểm tra..."
+
+[node name="TrackingLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Tracking: Đang kiểm tra..."
+
+[node name="ConfidenceLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Độ tin cậy: 0%"
+
+[node name="FeedbackLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Phản hồi: Chờ dữ liệu"
+autowrap_mode = 2
+
+[node name="HelpLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 0.25, 0.25, 1)
+theme_override_font_sizes/font_size = 12
+text = "T: tracking  |  K: kết nối\nC: đo  |  R/F: rep đúng/sai"
+
+[connection signal="pressed" from="ColorRect/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="StartCalibButton" to="." method="_on_start_calib_button_pressed"]
+[connection signal="pressed" from="NextButton" to="." method="_on_next_button_pressed"]

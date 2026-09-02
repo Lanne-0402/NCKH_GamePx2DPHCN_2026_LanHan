@@ -1,0 +1,15 @@
+AnimatedSprite2D
+Timer
+Button
+ProgressBar
+Label
+ColorRect
+HBoxContainer
+ScrollContainer
+TextureButton
+CanvasLayer
+OptionButton
+MenuButton
+VBoxContainer
+Sprite2D
+ParallaxLayer

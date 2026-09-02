@@ -4,3 +4,5 @@ Repo chứa mã nguồn dự án của Game pixel 2D giúp phục hồi chức n
 ### Thực hiện bởi: 
 - Nông Thị Hồng Lan (Chủ trì)
 - Nguyễn Ngọc Gia Hân.
+
+Xem [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) để biết cách phân chia `core`, `shared`, giao diện, từng map và smoke test.

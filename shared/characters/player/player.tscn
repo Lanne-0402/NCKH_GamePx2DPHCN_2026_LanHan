@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://ckudr8chj1kgo"]
+
+[ext_resource type="Script" uid="uid://80kl10p8d3vr" path="res://shared/characters/player/player.gd" id="1_4flbx"]
+[ext_resource type="PackedScene" path="res://shared/characters/player/placeholders/player_placeholder_visual.tscn" id="2_visual"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_s7wsd"]
+size = Vector2(42, 72)
+
+[node name="Player" type="CharacterBody2D" unique_id=1594107395]
+script = ExtResource("1_4flbx")
+
+[node name="Visuals" parent="." instance=ExtResource("2_visual")]
+
+[node name="Bone" type="CollisionShape2D" parent="." unique_id=98635658]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_s7wsd")

@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://bmcj6g2n8mabc"]
+
+[ext_resource type="Script" uid="uid://b1nnjcnmhayrm" path="res://ui/screens/start/start_screen.gd" id="1_ncxyx"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_pevhg"]
+load_path = "res://.godot/imported/settings_app_icon.png-386b58a75620e205d7456a39286c4080.ctex"
+
+[node name="Start_Screen" type="Control" unique_id=1331584676]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ncxyx")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1591110678]
+layout_mode = 0
+offset_right = 1148.0
+offset_bottom = 649.0
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1476647068]
+
+[node name="StartButton" type="Button" parent="CanvasLayer" unique_id=1958616486]
+offset_left = 468.0
+offset_top = 462.0
+offset_right = 645.0
+offset_bottom = 533.0
+theme_override_font_sizes/font_size = 45
+text = "Bắt đầu"
+
+[node name="SettingsButton" type="Button" parent="CanvasLayer" unique_id=1665541582]
+offset_left = 49.0
+offset_top = 36.0
+offset_right = 91.0
+offset_bottom = 78.0
+icon = SubResource("CompressedTexture2D_pevhg")
+expand_icon = true
+
+[connection signal="pressed" from="CanvasLayer/StartButton" to="." method="_on_start_button_pressed"]

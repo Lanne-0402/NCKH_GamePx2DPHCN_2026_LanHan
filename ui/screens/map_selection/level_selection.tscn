@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://dy85hrg8lhd8v"]
+
+[ext_resource type="Script" uid="uid://dxlf8qpw45hgq" path="res://ui/screens/map_selection/level_selection.gd" id="1_tsd2a"]
+
+[node name="Level_Selection" type="Control" unique_id=531160974]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tsd2a")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1051481646]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 648.0
+
+[node name="BackButton" type="Button" parent="." unique_id=2101697534]
+layout_mode = 0
+offset_left = 85.0
+offset_top = 50.0
+offset_right = 189.0
+offset_bottom = 86.0
+theme_override_font_sizes/font_size = 20
+text = "< Quay lại"
+
+[node name="Label" type="Label" parent="." unique_id=2009322159]
+layout_mode = 0
+offset_left = 419.0
+offset_top = 111.0
+offset_right = 710.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 35
+text = "CHỌN MÀN CHƠI"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=1028295698]
+layout_mode = 0
+offset_left = 166.0
+offset_top = 219.0
+offset_right = 966.0
+offset_bottom = 569.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer" unique_id=953871960]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="ScrollContainer/HBoxContainer" unique_id=875117550]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+text = "Map 1
+Phá cản mở đường"
+
+[node name="Button2" type="Button" parent="ScrollContainer/HBoxContainer" unique_id=159510082]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+text = "Map 2
+Nâng đá"
+
+[node name="Button3" type="Button" parent="ScrollContainer/HBoxContainer" unique_id=1033918143]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+text = "Map 3
+Đẩy lùi tường"
+
+[node name="Button4" type="Button" parent="ScrollContainer/HBoxContainer" unique_id=906391896]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+text = "Map 4
+Leo vách đá cao"
+
+[node name="Button5" type="Button" parent="ScrollContainer/HBoxContainer" unique_id=1242456300]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+text = "Map 5
+Thiền định"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/HBoxContainer/Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/HBoxContainer/Button2" to="." method="_on_button_2_pressed"]
+[connection signal="pressed" from="ScrollContainer/HBoxContainer/Button3" to="." method="_on_button_3_pressed"]
+[connection signal="pressed" from="ScrollContainer/HBoxContainer/Button4" to="." method="_on_button_4_pressed"]
+[connection signal="pressed" from="ScrollContainer/HBoxContainer/Button5" to="." method="_on_button_5_pressed"]
