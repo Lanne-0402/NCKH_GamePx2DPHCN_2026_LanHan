@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b1nnjcnmhayrm" path="res://ui/screens/start/start_screen.gd" id="1_ncxyx"]
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_pevhg"]
-load_path = "res://.godot/imported/settings_app_icon.png-386b58a75620e205d7456a39286c4080.ctex"
+[ext_resource type="Texture2D" path="res://settings_app_icon.png" id="2_settings_icon"]
 
 [node name="Start_Screen" type="Control" unique_id=1331584676]
 layout_mode = 3
@@ -34,7 +33,7 @@ offset_left = 49.0
 offset_top = 36.0
 offset_right = 91.0
 offset_bottom = 78.0
-icon = SubResource("CompressedTexture2D_pevhg")
+icon = ExtResource("2_settings_icon")
 expand_icon = true
 
 [connection signal="pressed" from="CanvasLayer/StartButton" to="." method="_on_start_button_pressed"]

@@ -13,10 +13,17 @@ const REQUIRED_SCENES := [
 	"res://maps/map_1/placeholders/map_1_pose_guide.tscn",
 	"res://maps/map_1/placeholders/map_1_rock_visual.tscn",
 	"res://maps/map_1/main_level.tscn",
+	"res://maps/map_1/visuals/map_1_background.tscn",
+	"res://maps/map_1/visuals/map_1_ground.tscn",
+	"res://maps/map_1/visuals/map_1_cave.tscn",
+	"res://maps/map_1/visuals/map_1_rock_visual.tscn",
 	"res://maps/map_2/placeholders/map_2_background.tscn",
 	"res://maps/map_2/placeholders/map_2_pose_guide.tscn",
 	"res://maps/map_2/placeholders/map_2_slab_visual.tscn",
 	"res://maps/map_2/main_level.tscn",
+	"res://maps/map_3/main_level.tscn",
+	"res://maps/map_4/main_level.tscn",
+	"res://maps/map_5/main_level.tscn",
 ]
 
 

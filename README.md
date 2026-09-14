@@ -85,7 +85,7 @@ Xem thêm [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) và [JSON_Contract.docx](
 
 5. Nhấn **F6** để chạy scene đang mở hoặc **F5** để chạy toàn bộ project.
 
-> **Lưu ý phiên bản hiện tại:** Một số tham chiếu vẫn sử dụng `res://shared/` sau khi thư mục được chuyển sang `maps/shared/`. Cần đồng bộ các đường dẫn này trước khi chạy các màn chơi liên quan.
+Các thành phần dùng chung được tham chiếu qua `res://maps/shared/`. Icon Settings ở màn hình bắt đầu tham chiếu ảnh nguồn; Godot tự tạo cache khi import.
 
 ### Điều khiển mô phỏng
 
@@ -114,18 +114,22 @@ Các kiểm thử tập trung vào:
 
 Các test hiện có sử dụng dữ liệu mô phỏng, chưa thay thế cho kiểm thử với camera và người dùng thực tế.
 
+`tests/core/resource_paths_smoke_test.tscn` kiểm tra load và khởi tạo màn chính Map 1–5, các scene visuals Map 1 và các placeholder được liệt kê. Test này không thay thế kiểm thử gameplay. Sau thay đổi tài nguyên, cần chạy lại trên bản clone hoặc giải nén mới để tránh phụ thuộc cache cũ. Bản cập nhật này đã kiểm tra tĩnh đường dẫn; chưa xác nhận smoke test chạy thành công trong Godot.
+
 ## Giới hạn hiện tại
 
 * Chưa hoàn tất kết nối backend nhận diện chuyển động thực tế.
 * Nhiều thành phần hình ảnh vẫn là placeholder.
-* Các asset pack đã được bổ sung nhưng chưa hoàn tất tích hợp vào màn chơi.
-* Cần đồng bộ đường dẫn tài nguyên và tài liệu cấu trúc sau khi tổ chức lại thư mục.
+* Map 1 đã tích hợp assets môi trường, vật cản và theme cho bảng hướng dẫn/kết quả; giao diện chưa được xem là hoàn thiện.
+* Nhân vật và hướng dẫn tư thế Map 1 vẫn là placeholder; hiệu ứng và âm thanh chuyên biệt còn chờ bổ sung. Xem [assets/map_1/README.md](assets/map_1/README.md).
 
 Dự án hiện là prototype nghiên cứu, chưa được xác nhận hiệu quả lâm sàng và không thay thế hướng dẫn của chuyên gia phục hồi chức năng.
 
 ## Định hướng phát triển
 
-* [ ] Đồng bộ đường dẫn tài nguyên và chạy lại các smoke test.
+* [x] Đồng bộ tham chiếu thành phần dùng chung sang `maps/shared/` và bỏ tham chiếu trực tiếp cache ở màn hình bắt đầu.
+* [x] Bổ sung danh sách kiểm tra đường dẫn cho visuals Map 1 và màn chính Map 3–5.
+* [ ] Chạy lại smoke test trong Godot trên bản clone hoặc giải nén mới.
 * [ ] Tích hợp backend camera/MediaPipe theo contract.
 * [ ] Thay thế placeholder bằng tài nguyên hình ảnh phù hợp.
 * [ ] Hoàn thiện phản hồi giao diện và hướng dẫn động tác.
