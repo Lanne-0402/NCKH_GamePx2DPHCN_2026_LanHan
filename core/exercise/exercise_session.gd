@@ -64,6 +64,8 @@ func start_session(session_config: Dictionary) -> bool:
 	_session_started = true
 	_change_state(State.READY)
 	_emit_progress()
+	# Only recognition settings go to the provider. Godot owns rep targets,
+	# phases and rest timing in config for the entire session.
 	_pose_input.start_exercise({
 		"session_id": session_id,
 		"exercise_id": exercise_id,
@@ -75,9 +77,6 @@ func start_session(session_config: Dictionary) -> bool:
 		"minimum_movement_duration_ms": int(config.get("minimum_movement_duration_ms", 2000)),
 		"maximum_movement_duration_ms": int(config.get("maximum_movement_duration_ms", 5000)),
 		"hold_duration_ms": int(config.get("hold_duration_ms", 0)),
-		"repetitions_per_phase": int(config["repetitions_per_phase"]),
-		"phase_count": int(config["phase_count"]),
-		"rest_duration_ms": int(float(config.get("rest_duration_seconds", 30.0)) * 1000.0),
 	})
 	var tracking_ok := bool(_pose_input.last_tracking_status.get("person_detected", false)) \
 			and bool(_pose_input.last_tracking_status.get("required_body_visible", false))

@@ -105,7 +105,7 @@ func handle_valid_repetition(_data: Dictionary) -> void:
 	_play_push_burst()
 	_hold_retreat = 0.0
 	hold_visual_progress_changed.emit(0.0)
-	await get_tree().create_timer(0.45).timeout
+	await get_tree().create_timer(0.45, false).timeout
 	if pushes_completed < total_pushes:
 		_begin_wave(pushes_completed)
 
@@ -120,7 +120,7 @@ func play_finish_sequence() -> void:
 	tween.tween_property(wall_b, "position", _offscreen_position(wall_b.position, 1.0), 0.55)
 	await tween.finished
 	energy_wave.hide()
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.3, false).timeout
 
 
 func is_action_window_open() -> bool:

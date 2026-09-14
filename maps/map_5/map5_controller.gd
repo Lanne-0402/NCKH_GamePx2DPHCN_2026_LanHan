@@ -99,7 +99,7 @@ func play_finish_sequence() -> void:
 	var tween := create_tween()
 	tween.tween_property(steam, "scale", Vector2(1.35, 1.35), 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
-	await get_tree().create_timer(0.35).timeout
+	await get_tree().create_timer(0.35, false).timeout
 
 
 func is_action_window_open() -> bool:

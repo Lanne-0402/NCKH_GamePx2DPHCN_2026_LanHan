@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bolyu353r7fpf"]
 
 [ext_resource type="Script" uid="uid://cs65ca4t4bca8" path="res://maps/map_1/obstacle.gd" id="1_sl1jc"]
-[ext_resource type="PackedScene" path="res://maps/map_1/placeholders/map_1_rock_visual.tscn" id="2_visual"]
+[ext_resource type="PackedScene" path="res://maps/map_1/visuals/map_1_rock_visual.tscn" id="2_visual"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_s7wsd"]
 size = Vector2(68, 58)

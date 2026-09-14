@@ -85,7 +85,7 @@ func handle_valid_repetition(_data: Dictionary) -> void:
 	hold_visual_progress_changed.emit(0.0)
 	if steps_completed < total_steps:
 		if step_transition_delay > 0.0:
-			await get_tree().create_timer(step_transition_delay).timeout
+			await get_tree().create_timer(step_transition_delay, false).timeout
 		_begin_step(steps_completed)
 	else:
 		summit.show()
@@ -101,7 +101,7 @@ func play_finish_sequence() -> void:
 	var tween := _make_visual_tween()
 	tween.tween_property(summit, "scale", Vector2(1.15, 1.15), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
-	await get_tree().create_timer(0.35).timeout
+	await get_tree().create_timer(0.35, false).timeout
 
 
 func is_action_window_open() -> bool:

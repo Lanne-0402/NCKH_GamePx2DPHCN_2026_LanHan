@@ -236,7 +236,7 @@ func simulate_valid_hold(step_seconds := 1.0) -> void:
 			})
 			return
 		if step_seconds > 0.0:
-			await get_tree().create_timer(step_seconds).timeout
+			await get_tree().create_timer(step_seconds, false).timeout
 		var elapsed_ms := int(round(float(target_ms) * float(step) / float(steps)))
 		_emit_exercise_event("hold_progress", candidate_id, {
 			"hold_elapsed_ms": elapsed_ms,

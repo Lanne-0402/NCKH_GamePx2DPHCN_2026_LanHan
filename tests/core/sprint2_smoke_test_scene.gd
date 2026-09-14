@@ -16,6 +16,11 @@ func _run() -> void:
 		"rest_duration_seconds": 0.05,
 	}))
 	assert(session.state == ExerciseSession.State.ACTIVE)
+	for field in ["repetitions_per_phase", "phase_count", "rest_duration_ms"]:
+		assert(not PoseInput.last_exercise_request.has(field))
+	assert(session.config["repetitions_per_phase"] == 2)
+	assert(session.config["phase_count"] == 2)
+	assert(is_equal_approx(session.config["rest_duration_seconds"], 0.05))
 	PoseInput.simulate_rejected_rep()
 	assert(session.total_rejected_reps == 1)
 	PoseInput.simulate_valid_rep()
@@ -34,4 +39,3 @@ func _run() -> void:
 	assert(session.total_valid_reps == 4)
 	print("SPRINT_2_SMOKE_TEST: PASS")
 	get_tree().quit(0)
-

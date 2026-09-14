@@ -99,7 +99,7 @@ func _on_session_state_changed(current: ExerciseSession.State, _previous: Exerci
 
 func _on_session_progress_changed(rep: int, reps_required: int, phase: int, phases: int) -> void:
 	rep_label.text = "LẦN: %d/%d" % [rep, reps_required]
-	phase_label.text = "PHASE: %d/%d" % [phase, phases]
+	phase_label.text = "HIỆP: %d/%d" % [phase, phases]
 	map5_controller.set_current_phase(phase)
 
 
@@ -210,9 +210,9 @@ func _on_start_exercise_button_pressed() -> void:
 	countdown_label.show()
 	for value in [3, 2, 1]:
 		countdown_label.text = str(value)
-		await get_tree().create_timer(countdown_step_seconds).timeout
+		await get_tree().create_timer(countdown_step_seconds, false).timeout
 	countdown_label.text = "BẮT ĐẦU"
-	await get_tree().create_timer(countdown_step_seconds).timeout
+	await get_tree().create_timer(countdown_step_seconds, false).timeout
 	countdown_label.hide()
 	_start_new_session_attempt()
 	_intro_running = false

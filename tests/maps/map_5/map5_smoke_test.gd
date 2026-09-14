@@ -32,11 +32,15 @@ func _run() -> void:
 	await _wait_for_session_state(session, ExerciseSession.State.ACTIVE)
 	assert(str(PoseInput.last_exercise_request.get("exercise_id", "")) == "cross_body_shoulder_stretch")
 	assert(int(PoseInput.last_exercise_request.get("hold_duration_ms", 0)) == 30000)
-	assert(int(PoseInput.last_exercise_request.get("repetitions_per_phase", 0)) == 1)
-	assert(int(PoseInput.last_exercise_request.get("phase_count", 0)) == 2)
+	assert(int(session.config["repetitions_per_phase"]) == 1)
+	assert(int(session.config["phase_count"]) == 2)
+	for field in ["repetitions_per_phase", "phase_count", "rest_duration_ms"]:
+		assert(not PoseInput.last_exercise_request.has(field))
 	assert(map5.is_action_window_open())
 	assert(map5.get_side_label() == "TAY TRÁI")
-	assert(is_equal_approx(level.get_node("Player").global_position, level.get_node("Map5RestZone/PlayerAnchor").global_position))
+	var player_position: Vector2 = level.get_node("Player").global_position
+	var anchor_position: Vector2 = level.get_node("Map5RestZone/PlayerAnchor").global_position
+	assert(player_position.is_equal_approx(anchor_position))
 
 	PoseInput.simulate_rejected_hold()
 	await get_tree().process_frame

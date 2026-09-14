@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://dso7ymc4hppnj" path="res://shared/world/scrolling_background.gd" id="1_scroll"]
+[ext_resource type="Script" uid="uid://dso7ymc4hppnj" path="res://maps/shared/world/scrolling_background.gd" id="1_scroll"]
 
 [node name="ScrollingBackground" type="Node2D"]
 z_index = -20

@@ -1,10 +1,12 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://ui/shared/settings_menu.tscn" id="settings_menu"]
+[ext_resource type="Texture2D" path="res://ui/shared/settings_gear.svg" id="settings_gear"]
 [ext_resource type="Script" path="res://maps/map_5/main_level.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://bq6x60e10vgp" path="res://core/exercise/exercise_session.gd" id="2_session"]
 [ext_resource type="Script" path="res://core/exercise/tracking_stability.gd" id="3_stability"]
 [ext_resource type="Script" path="res://maps/map_5/map5_controller.gd" id="4_controller"]
-[ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://shared/characters/player/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://maps/shared/characters/player/player.tscn" id="5_player"]
 [ext_resource type="PackedScene" path="res://maps/map_5/placeholders/map_5_background.tscn" id="6_background"]
 [ext_resource type="PackedScene" path="res://maps/map_5/placeholders/map_5_rest_zone.tscn" id="7_rest"]
 [ext_resource type="PackedScene" path="res://maps/map_5/placeholders/map_5_pose_guide.tscn" id="9_pose"]
@@ -30,83 +32,90 @@ z_index = 4
 z_index = 10
 position = Vector2(576, 320)
 
+[node name="SettingsMenu" parent="." instance=ExtResource("settings_menu")]
+
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="PhaseLabel" type="Label" parent="UI"]
-offset_left = 60.0
-offset_top = 10.0
-offset_right = 230.0
-offset_bottom = 46.0
+offset_left = 24.0
+offset_top = 116.0
+offset_right = 264.0
+offset_bottom = 148.0
 theme_override_font_sizes/font_size = 22
-text = "PHASE: 1/2"
+text = "HIỆP: 1/2"
 
 [node name="RepLabel" type="Label" parent="UI"]
-offset_left = 500.0
-offset_top = 10.0
-offset_right = 700.0
-offset_bottom = 46.0
+offset_left = 288.0
+offset_top = 20.0
+offset_right = 768.0
+offset_bottom = 54.0
 theme_override_font_sizes/font_size = 22
 text = "LẦN: 0/1"
+horizontal_alignment = 1
 
 [node name="StateLabel" type="Label" parent="UI"]
-offset_left = 760.0
-offset_top = 10.0
-offset_right = 1135.0
-offset_bottom = 46.0
+offset_left = 792.0
+offset_top = 20.0
+offset_right = 1132.0
+offset_bottom = 54.0
 theme_override_font_sizes/font_size = 22
 text = "TRẠNG THÁI: CHỜ"
+horizontal_alignment = 1
 
 [node name="HeartsLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 44.0
-offset_right = 250.0
-offset_bottom = 74.0
+offset_left = 792.0
+offset_top = 60.0
+offset_right = 1132.0
+offset_bottom = 90.0
 theme_override_colors/font_color = Color(0.85, 0.12, 0.16, 1)
 theme_override_font_sizes/font_size = 18
 text = "ỔN ĐỊNH: ♥ ♥ ♥"
+horizontal_alignment = 1
 
 [node name="StretchProgressLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 76.0
-offset_right = 280.0
-offset_bottom = 106.0
+offset_left = 24.0
+offset_top = 78.0
+offset_right = 264.0
+offset_bottom = 110.0
 theme_override_colors/font_color = Color(0.16, 0.14, 0.18, 1)
 theme_override_font_sizes/font_size = 18
 text = "LẦN CĂNG: 0/2"
 
 [node name="SideLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 108.0
-offset_right = 280.0
-offset_bottom = 138.0
+offset_left = 24.0
+offset_top = 166.0
+offset_right = 264.0
+offset_bottom = 196.0
 theme_override_colors/font_color = Color(0.12, 0.32, 0.62, 1)
 theme_override_font_sizes/font_size = 16
 text = "BÊN: TAY TRÁI"
 
 [node name="BonusLabel" type="Label" parent="UI"]
-offset_left = 860.0
-offset_top = 76.0
-offset_right = 1120.0
-offset_bottom = 106.0
+offset_left = 792.0
+offset_top = 100.0
+offset_right = 1132.0
+offset_bottom = 132.0
 theme_override_colors/font_color = Color(0.78, 0.48, 0.08, 1)
 theme_override_font_sizes/font_size = 18
 text = "ĐIỂM THƯỞNG: 0/100"
+horizontal_alignment = 1
 
 [node name="FeedbackLabel" type="Label" parent="UI"]
-offset_left = 250.0
-offset_top = 53.0
-offset_right = 920.0
-offset_bottom = 88.0
+offset_left = 288.0
+offset_top = 76.0
+offset_right = 768.0
+offset_bottom = 136.0
 theme_override_colors/font_color = Color(0.05, 0.05, 0.05, 1)
 theme_override_font_sizes/font_size = 20
 text = "Đang chuẩn bị Map 5..."
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="HoldPanel" type="Control" parent="UI"]
-offset_left = 320.0
-offset_top = 98.0
-offset_right = 680.0
-offset_bottom = 162.0
+offset_left = 348.0
+offset_top = 144.0
+offset_right = 708.0
+offset_bottom = 208.0
 
 [node name="HoldLabel" type="Label" parent="UI/HoldPanel"]
 layout_mode = 0
@@ -124,14 +133,14 @@ offset_bottom = 58.0
 show_percentage = false
 
 [node name="BonusPanel" type="Control" parent="UI"]
-offset_left = 720.0
-offset_top = 98.0
-offset_right = 1080.0
-offset_bottom = 162.0
+offset_left = 792.0
+offset_top = 144.0
+offset_right = 1132.0
+offset_bottom = 208.0
 
 [node name="BonusBarLabel" type="Label" parent="UI/BonusPanel"]
 layout_mode = 0
-offset_right = 360.0
+offset_right = 340.0
 offset_bottom = 28.0
 theme_override_font_sizes/font_size = 18
 text = "ĐIỂM THƯỞNG"
@@ -140,9 +149,19 @@ horizontal_alignment = 1
 [node name="BonusBar" type="ProgressBar" parent="UI/BonusPanel"]
 layout_mode = 0
 offset_top = 31.0
-offset_right = 360.0
+offset_right = 340.0
 offset_bottom = 58.0
 show_percentage = false
+
+[node name="SettingsButton" type="Button" parent="UI"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 72.0
+offset_bottom = 68.0
+tooltip_text = "Cài đặt"
+theme_override_font_sizes/font_size = 20
+icon = ExtResource("settings_gear")
+icon_alignment = 1
 
 [node name="InstructionPanel" type="PanelContainer" parent="UI"]
 offset_left = 250.0

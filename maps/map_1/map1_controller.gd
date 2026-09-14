@@ -82,7 +82,7 @@ func play_finish_sequence() -> void:
 	var tween := create_tween()
 	tween.tween_property(cave, "position:x", 930.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await tween.finished
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(0.6, false).timeout
 
 
 func _spawn_if_session_active() -> void:

@@ -94,7 +94,7 @@ func _on_session_state_changed(current: ExerciseSession.State, _previous: Exerci
 
 func _on_session_progress_changed(rep: int, reps_required: int, phase: int, phases: int) -> void:
 	rep_label.text = "LẦN: %d/%d" % [rep, reps_required]
-	phase_label.text = "PHASE: %d/%d" % [phase, phases]
+	phase_label.text = "HIỆP: %d/%d" % [phase, phases]
 
 
 func _on_session_feedback_changed(code: String) -> void:
@@ -149,7 +149,7 @@ func _on_session_completed(summary: Dictionary) -> void:
 		unlock_text = "Đã hoàn thành cấp độ cao nhất."
 	elif stability >= 2:
 		unlock_text = "Cấp độ tiếp theo đã sẵn sàng."
-	result_label.text = "HOÀN THÀNH MAP 3\n\nLần đẩy hợp lệ: %d\nLần chưa hợp lệ: %d\nSố phase: %d\nỔn định còn lại: %d/3\nĐánh giá: %s\n%s" % [
+	result_label.text = "HOÀN THÀNH MAP 3\n\nLần đẩy hợp lệ: %d\nLần chưa hợp lệ: %d\nSố hiệp: %d\nỔn định còn lại: %d/3\nĐánh giá: %s\n%s" % [
 		int(summary.get("valid_reps", 0)),
 		int(summary.get("rejected_reps", 0)),
 		int(summary.get("phase_count", 0)),
@@ -203,9 +203,9 @@ func _on_start_exercise_button_pressed() -> void:
 	countdown_label.show()
 	for value in [3, 2, 1]:
 		countdown_label.text = str(value)
-		await get_tree().create_timer(countdown_step_seconds).timeout
+		await get_tree().create_timer(countdown_step_seconds, false).timeout
 	countdown_label.text = "BẮT ĐẦU"
-	await get_tree().create_timer(countdown_step_seconds).timeout
+	await get_tree().create_timer(countdown_step_seconds, false).timeout
 	countdown_label.hide()
 	_start_new_session_attempt()
 	_intro_running = false
@@ -298,8 +298,8 @@ func _feedback_text(code: String) -> String:
 		"REP_VALID": "Tốt lắm! Tường đã bị đẩy lùi thành công.",
 		"MOVEMENT_TOO_FAST": "Cử động quá nhanh. Hãy thực hiện chậm hơn.",
 		"REP_REJECTED": "Lần tập chưa hợp lệ.",
-		"PHASE_REST": "Hoàn thành phase. Hãy nghỉ 30 giây.",
-		"NEXT_PHASE": "Bắt đầu phase tiếp theo.",
+		"PHASE_REST": "Hoàn thành hiệp. Hãy nghỉ 30 giây.",
+		"NEXT_PHASE": "Bắt đầu hiệp tiếp theo.",
 		"TRACKING_LOST": "Không nhìn thấy người chơi. Buổi tập đã tạm dừng.",
 		"TRACKING_RESTORED": "Đã nhận diện lại. Tiếp tục buổi tập.",
 		"BACKEND_DISCONNECTED": "Mất kết nối với hệ thống nhận diện.",

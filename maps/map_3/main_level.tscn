@@ -1,11 +1,13 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://ui/shared/settings_menu.tscn" id="settings_menu"]
+[ext_resource type="Texture2D" path="res://ui/shared/settings_gear.svg" id="settings_gear"]
 [ext_resource type="Script" path="res://maps/map_3/main_level.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://bq6x60e10vgp" path="res://core/exercise/exercise_session.gd" id="2_session"]
 [ext_resource type="Script" path="res://core/exercise/tracking_stability.gd" id="3_stability"]
 [ext_resource type="Script" path="res://maps/map_3/map3_controller.gd" id="4_controller"]
-[ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://shared/characters/player/player.tscn" id="5_player"]
-[ext_resource type="PackedScene" uid="uid://dkfybum1em5q" path="res://shared/world/ground.tscn" id="6_ground"]
+[ext_resource type="PackedScene" uid="uid://ckudr8chj1kgo" path="res://maps/shared/characters/player/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" uid="uid://dkfybum1em5q" path="res://maps/shared/world/ground.tscn" id="6_ground"]
 [ext_resource type="PackedScene" path="res://maps/map_3/placeholders/map_3_background.tscn" id="7_background"]
 [ext_resource type="PackedScene" path="res://maps/map_3/placeholders/map_3_wall_visual.tscn" id="8_wall"]
 [ext_resource type="PackedScene" path="res://maps/map_3/placeholders/map_3_pose_guide.tscn" id="9_pose"]
@@ -48,74 +50,80 @@ rotation = 3.1415927
 z_index = 9
 position = Vector2(576, 320)
 
+[node name="SettingsMenu" parent="." instance=ExtResource("settings_menu")]
+
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="PhaseLabel" type="Label" parent="UI"]
-offset_left = 60.0
-offset_top = 10.0
-offset_right = 230.0
-offset_bottom = 46.0
+offset_left = 24.0
+offset_top = 116.0
+offset_right = 264.0
+offset_bottom = 148.0
 theme_override_font_sizes/font_size = 22
-text = "PHASE: 1/2"
+text = "HIỆP: 1/2"
 
 [node name="RepLabel" type="Label" parent="UI"]
-offset_left = 500.0
-offset_top = 10.0
-offset_right = 700.0
-offset_bottom = 46.0
+offset_left = 288.0
+offset_top = 20.0
+offset_right = 768.0
+offset_bottom = 54.0
 theme_override_font_sizes/font_size = 22
 text = "LẦN: 0/5"
+horizontal_alignment = 1
 
 [node name="StateLabel" type="Label" parent="UI"]
-offset_left = 760.0
-offset_top = 10.0
-offset_right = 1135.0
-offset_bottom = 46.0
+offset_left = 792.0
+offset_top = 20.0
+offset_right = 1132.0
+offset_bottom = 54.0
 theme_override_font_sizes/font_size = 22
 text = "TRẠNG THÁI: CHỜ"
+horizontal_alignment = 1
 
 [node name="HeartsLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 44.0
-offset_right = 250.0
-offset_bottom = 74.0
+offset_left = 792.0
+offset_top = 60.0
+offset_right = 1132.0
+offset_bottom = 90.0
 theme_override_colors/font_color = Color(0.85, 0.12, 0.16, 1)
 theme_override_font_sizes/font_size = 18
 text = "ỔN ĐỊNH: ♥ ♥ ♥"
+horizontal_alignment = 1
 
 [node name="PushProgressLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 76.0
-offset_right = 280.0
-offset_bottom = 106.0
+offset_left = 24.0
+offset_top = 78.0
+offset_right = 264.0
+offset_bottom = 110.0
 theme_override_colors/font_color = Color(0.16, 0.14, 0.18, 1)
 theme_override_font_sizes/font_size = 18
 text = "TƯỜNG ĐÃ ĐẨY: 0/10"
 
 [node name="DirectionLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 108.0
-offset_right = 320.0
-offset_bottom = 138.0
+offset_left = 24.0
+offset_top = 166.0
+offset_right = 264.0
+offset_bottom = 196.0
 theme_override_colors/font_color = Color(0.12, 0.32, 0.62, 1)
 theme_override_font_sizes/font_size = 16
 text = "HƯỚNG: TRÁI - PHẢI"
 
 [node name="FeedbackLabel" type="Label" parent="UI"]
-offset_left = 250.0
-offset_top = 53.0
-offset_right = 920.0
-offset_bottom = 88.0
+offset_left = 288.0
+offset_top = 76.0
+offset_right = 768.0
+offset_bottom = 136.0
 theme_override_colors/font_color = Color(0.05, 0.05, 0.05, 1)
 theme_override_font_sizes/font_size = 20
 text = "Đang chuẩn bị Map 3..."
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="HoldPanel" type="Control" parent="UI"]
-offset_left = 396.0
-offset_top = 98.0
-offset_right = 756.0
-offset_bottom = 162.0
+offset_left = 348.0
+offset_top = 144.0
+offset_right = 708.0
+offset_bottom = 208.0
 
 [node name="HoldLabel" type="Label" parent="UI/HoldPanel"]
 layout_mode = 0
@@ -131,6 +139,16 @@ offset_top = 31.0
 offset_right = 360.0
 offset_bottom = 58.0
 show_percentage = false
+
+[node name="SettingsButton" type="Button" parent="UI"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 72.0
+offset_bottom = 68.0
+tooltip_text = "Cài đặt"
+theme_override_font_sizes/font_size = 20
+icon = ExtResource("settings_gear")
+icon_alignment = 1
 
 [node name="InstructionPanel" type="PanelContainer" parent="UI"]
 offset_left = 250.0
@@ -167,7 +185,7 @@ horizontal_alignment = 1
 [node name="Instructions" type="Label" parent="UI/InstructionPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
-text = "1. Cánh tay gấp 90°, cẳng tay nâng ngang bằng vai.\n2. Hai bàn tay nắm úp vào nhau, hướng lên trên.\n3. Khi tường gai dừng, dạng hai cánh tay sang hai bên nhiều nhất có thể.\n4. Giữ đúng tư thế đủ 5 giây để sóng năng lượng đẩy tường lùi.\n5. Hoàn thành 2 phase × 5 lần; nghỉ 30 giây giữa phase."
+text = "1. Cánh tay gấp 90°, cẳng tay nâng ngang bằng vai.\n2. Hai bàn tay nắm úp vào nhau, hướng lên trên.\n3. Khi tường gai dừng, dạng hai cánh tay sang hai bên nhiều nhất có thể.\n4. Giữ đúng tư thế đủ 5 giây để sóng năng lượng đẩy tường lùi.\n5. Hoàn thành 2 hiệp × 5 lần; nghỉ 30 giây giữa hiệp."
 autowrap_mode = 2
 
 [node name="SafetyNote" type="Label" parent="UI/InstructionPanel/MarginContainer/VBoxContainer"]

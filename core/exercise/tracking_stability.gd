@@ -51,7 +51,7 @@ func _on_session_state_changed(current: ExerciseSession.State, previous: Exercis
 
 
 func _apply_penalty_after_grace(incident_token: int) -> void:
-	await get_tree().create_timer(grace_seconds).timeout
+	await get_tree().create_timer(grace_seconds, false).timeout
 	if incident_token != _incident_token \
 			or not _incident_active \
 			or _session.state != ExerciseSession.State.TRACKING_LOST \

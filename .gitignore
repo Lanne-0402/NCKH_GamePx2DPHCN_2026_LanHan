@@ -1,0 +1,10 @@
+# Godot editor cache
+.godot/
+
+# Operating-system metadata
+.DS_Store
+__MACOSX/
+
+# Temporary image/editor backups
+*.png~
+*.aseprite~

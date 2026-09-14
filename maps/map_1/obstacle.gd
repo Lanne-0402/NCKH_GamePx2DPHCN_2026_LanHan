@@ -33,7 +33,6 @@ func configure_exercise_rock(action_zone_x: float, approach_speed: float) -> voi
 	_exercise_mode = true
 	_action_zone_x = action_zone_x
 	_exercise_approach_speed = approach_speed
-	$RockVisual/Base.color = Color(0.38, 0.30, 0.22)
 
 
 func set_movement_enabled(enabled: bool) -> void:
