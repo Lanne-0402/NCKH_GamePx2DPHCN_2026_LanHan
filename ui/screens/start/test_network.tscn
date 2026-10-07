@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://d3k6rjdl8dub8"]
+
+[ext_resource type="Script" uid="uid://bf7m33vp61guf" path="res://ai_connector.gd" id="1_irwgo"]
+
+[node name="Node2D" type="Node2D" unique_id=1700899263]
+
+[node name="AIConnector" type="Node" parent="." unique_id=554247077]
+script = ExtResource("1_irwgo")
