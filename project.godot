@@ -23,7 +23,10 @@ PoseInput="*res://core/pose/mock_pose_provider.gd"
 [display]
 
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://assets/shared/ui/game_theme.tres"
 
 [physics]
 
@@ -31,6 +34,7 @@ window/stretch/aspect="expand"
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 2d/snap/snap_2d_transforms_to_pixel=true

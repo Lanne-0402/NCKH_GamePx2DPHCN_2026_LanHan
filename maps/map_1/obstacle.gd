@@ -12,6 +12,18 @@ var _waiting_at_action_zone := false
 var _action_zone_x := 0.0
 var _exercise_approach_speed := 170.0
 
+func set_rock_variant(index: int) -> void:
+	var sprite: Sprite2D = $RockVisual/Base
+	if index % 2 == 1:
+		sprite.texture = preload("res://assets/shared/environment/moss_boulder.png")
+		sprite.scale = Vector2(2,2)
+		sprite.position = Vector2(0,-80)
+		var collision: CollisionShape2D = $CollisionShape2D
+		collision.shape = collision.shape.duplicate()
+		collision.shape.size = Vector2(108,132)
+		collision.position = Vector2(0,-66)
+	# Large variant keeps the foot anchor but gets a private matching collider.
+
 func _process(delta: float) -> void:
 	if _destroying or not _movement_enabled:
 		return

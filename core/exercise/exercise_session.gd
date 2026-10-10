@@ -29,6 +29,23 @@ var _session_started := false
 var _state_before_tracking_loss: State = State.IDLE
 var _accepted_candidate_ids: Dictionary = {}
 var _pose_input: Node
+var _started_at := ""
+var _map_id := 1
+var _difficulty := 1
+var _menu_paused := false
+
+
+func set_menu_paused(paused: bool) -> void:
+	_menu_paused = paused
+	if not _session_started:
+		return
+	if paused:
+		_pose_input.pause_exercise("user_paused")
+		if state == State.ACTIVE:
+			hold_interrupted.emit({"feedback_code": "HOLD_INTERRUPTED"})
+			hold_progress_changed.emit(0.0, 0, int(config.get("hold_duration_ms", 0)))
+	elif state == State.ACTIVE and repetition_input_enabled:
+		_resume_provider()
 
 
 func _ready() -> void:
@@ -52,7 +69,10 @@ func start_session(session_config: Dictionary) -> bool:
 	if not _validate_config(session_config):
 		return false
 	config = session_config.duplicate(true)
-	session_id = str(config.get("session_id", "exercise-%d" % Time.get_ticks_msec()))
+	session_id = "%s-%s" % [str(config.get("session_id", "exercise")), Crypto.new().generate_random_bytes(12).hex_encode()]
+	_started_at = Time.get_datetime_string_from_system(true)
+	_map_id = Global.selected_action
+	_difficulty = 3 if Global.speed_multiplier >= 2.0 else (2 if Global.speed_multiplier >= 1.5 else 1)
 	exercise_id = str(config["exercise_id"])
 	rep_in_phase = 0
 	total_valid_reps = 0
@@ -117,7 +137,7 @@ func resume_session() -> void:
 		feedback_changed.emit("TRACKING_LOST")
 		return
 	if repetition_input_enabled:
-		_pose_input.resume_exercise()
+		_resume_provider()
 	else:
 		_pose_input.pause_exercise("waiting_for_action_zone")
 	_change_state(State.ACTIVE)
@@ -130,7 +150,7 @@ func set_repetition_input_enabled(enabled: bool, reason := "waiting_for_action_z
 	if not _session_started or state != State.ACTIVE:
 		return
 	if enabled:
-		_pose_input.resume_exercise()
+		_resume_provider()
 		if changed:
 			feedback_changed.emit("ACTION_ZONE_READY")
 	else:
@@ -146,6 +166,8 @@ func debug_skip_rest() -> void:
 
 
 func _on_exercise_event_received(data: Dictionary) -> void:
+	if _menu_paused or get_tree().paused:
+		return
 	if not _session_started or state != State.ACTIVE:
 		return
 	if not repetition_input_enabled:
@@ -213,7 +235,7 @@ func _finish_rest() -> void:
 		return
 	current_phase += 1
 	rep_in_phase = 0
-	_pose_input.resume_exercise()
+	_resume_provider()
 	_change_state(State.ACTIVE)
 	_emit_progress()
 	feedback_changed.emit("NEXT_PHASE")
@@ -223,13 +245,29 @@ func _complete_session() -> void:
 	_session_started = false
 	_pose_input.stop_exercise("session_completed")
 	_change_state(State.COMPLETED)
-	session_completed.emit({
+	var tracker := get_parent().get_node_or_null("TrackingStability")
+	var stability := int(tracker.stability) if tracker != null else 0
+	var summary := {
 		"session_id": session_id,
+		"map_id": _map_id,
+		"difficulty": _difficulty,
+		"started_at_utc": _started_at,
+		"completed_at_utc": Time.get_datetime_string_from_system(true),
+		"stability": stability,
+		"evaluation": "HOÀN HẢO" if stability >= 3 else ("HOÀN THÀNH" if stability == 2 else "CẦN CẢI THIỆN ĐỘ ỔN ĐỊNH"),
 		"exercise_id": exercise_id,
 		"valid_reps": total_valid_reps,
 		"rejected_reps": total_rejected_reps,
 		"phase_count": int(config["phase_count"]),
-	})
+	}
+	var bonus_controller := get_parent().get_node_or_null("Map5Controller")
+	if bonus_controller != null:
+		summary["bonus_points"] = int(bonus_controller.bonus_points)
+	# Commit results before the finishing animation or a scene change can interrupt it.
+	if tracker != null and stability >= 2:
+		Global.unlock_level_for_action(_map_id, mini(_difficulty + 1, 3))
+	Global.record_session(summary)
+	session_completed.emit(summary)
 	feedback_changed.emit("SESSION_COMPLETED")
 
 
@@ -250,7 +288,7 @@ func _on_tracking_status_changed(data: Dictionary) -> void:
 			_change_state(State.PAUSED)
 		else:
 			if repetition_input_enabled:
-				_pose_input.resume_exercise()
+				_resume_provider()
 			else:
 				_pose_input.pause_exercise("waiting_for_action_zone")
 			_change_state(State.ACTIVE)
@@ -294,3 +332,8 @@ func _validate_config(session_config: Dictionary) -> bool:
 		push_error("ExerciseSession repetitions and phases must be greater than zero.")
 		return false
 	return true
+
+
+func _resume_provider() -> void:
+	if not _menu_paused:
+		_pose_input.resume_exercise()

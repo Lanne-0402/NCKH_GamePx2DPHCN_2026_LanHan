@@ -169,12 +169,12 @@ func _apply_wall_positions(close_t: float, retreat_t: float) -> void:
 			wall_a.position = Vector2(CENTER.x, top_y)
 			wall_b.position = Vector2(CENTER.x, bottom_y)
 		WallDirection.DIAGONAL_RIGHT:
-			wall_a.rotation = PI * 0.25
-			wall_b.rotation = -PI * 0.75
+			wall_a.rotation = -PI * 0.25
+			wall_b.rotation = PI * 0.75
 			var offset := gap * 0.35
-			var start_a := Vector2(-180.0, 760.0)
+			var start_a := CENTER + Vector2(-900,900)
 			var safe_a := CENTER + Vector2(-offset, offset)
-			var start_b := Vector2(1332.0, -120.0)
+			var start_b := CENTER + Vector2(900,-900)
 			var safe_b := CENTER + Vector2(offset, -offset)
 			wall_a.position = start_a.lerp(safe_a, close_t)
 			wall_b.position = start_b.lerp(safe_b, close_t)
@@ -182,12 +182,12 @@ func _apply_wall_positions(close_t: float, retreat_t: float) -> void:
 				wall_a.position = safe_a.lerp(start_a, retreat_t * 0.65)
 				wall_b.position = safe_b.lerp(start_b, retreat_t * 0.65)
 		WallDirection.DIAGONAL_LEFT:
-			wall_a.rotation = -PI * 0.25
-			wall_b.rotation = PI * 0.75
+			wall_a.rotation = PI * 0.25
+			wall_b.rotation = -PI * 0.75
 			var offset := gap * 0.35
-			var start_a := Vector2(-180.0, -120.0)
+			var start_a := CENTER + Vector2(-900,-900)
 			var safe_a := CENTER + Vector2(-offset, -offset)
-			var start_b := Vector2(1332.0, 760.0)
+			var start_b := CENTER + Vector2(900,900)
 			var safe_b := CENTER + Vector2(offset, offset)
 			wall_a.position = start_a.lerp(safe_a, close_t)
 			wall_b.position = start_b.lerp(safe_b, close_t)

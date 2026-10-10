@@ -13,10 +13,10 @@ script = ExtResource("1_7kyun")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=681766131]
 layout_mode = 0
-offset_left = 15.0
-offset_top = -4.0
-offset_right = 1167.0
-offset_bottom = 640.0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.92, 0.89, 0.78, 1)
+mouse_filter = 2
 
 [node name="BackButton" type="Button" parent="ColorRect" unique_id=948372501]
 layout_mode = 0

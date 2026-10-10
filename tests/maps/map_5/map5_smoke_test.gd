@@ -68,7 +68,7 @@ func _run() -> void:
 	await get_tree().create_timer(1.1).timeout
 	assert(level.get_node("UI/ResultPanel").visible)
 	assert(Global.get_highest_unlocked_level(5) == 2)
-	assert("ĐIỂM THƯỞNG: 100" in level.get_node("UI/ResultPanel/MarginContainer/VBoxContainer/ResultLabel").text)
+	assert("Điểm thưởng: 100/100" in level.get_node("UI/ResultPanel/MarginContainer/VBoxContainer/ResultLabel").text)
 	print("MAP_5_SMOKE_TEST: PASS")
 	get_tree().quit(0)
 

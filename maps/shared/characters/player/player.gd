@@ -14,6 +14,7 @@ var _run_clock := 0.0
 var _action_tween: Tween
 var _movement_locked := false
 var _lock_position := Vector2.ZERO
+var mk2: Node2D
 
 @onready var visuals: Node2D = $Visuals
 @onready var body_shape: ColorRect = $Visuals/Shape
@@ -23,6 +24,17 @@ var _lock_position := Vector2.ZERO
 
 func _ready() -> void:
 	lives = max_lives
+	for child in visuals.get_children():
+		if child is CanvasItem and child.name != "Shadow": child.hide()
+	mk2 = preload("res://maps/shared/characters/player/exercise_actor.gd").new()
+	mk2.name = "Mk2"
+	mk2.z_index = 30
+	mk2.pose_id = [3,0,4,1,2][clampi(Global.selected_action,1,5)-1]
+	mk2.outfit_enabled = true
+	mk2.joints_visible = false
+	mk2.scale = Vector2(2,2)
+	mk2.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	visuals.add_child(mk2)
 
 
 func _process(delta: float) -> void:
@@ -56,6 +68,9 @@ func _physics_process(delta):
 
 
 func play_exercise_action() -> void:
+	if is_instance_valid(mk2):
+		mk2.amount = 1
+		mk2.refresh()
 	if is_instance_valid(_action_tween):
 		_action_tween.kill()
 	body_shape.color = Color(1.0, 0.72, 0.15)
@@ -64,6 +79,9 @@ func play_exercise_action() -> void:
 	_action_tween.tween_property(visuals, "scale", Vector2(1.25, 0.9), 0.12)
 	_action_tween.tween_property(visuals, "scale", Vector2.ONE, 0.18)
 	_action_tween.tween_callback(func(): body_shape.color = Color(0.20, 0.45, 0.85))
+	_action_tween.tween_callback(func():
+		mk2.amount = 0
+		mk2.refresh())
 	
 
 func set_running(enabled: bool) -> void:
