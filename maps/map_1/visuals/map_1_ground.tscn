@@ -21,8 +21,9 @@ texture = ExtResource("2_rock")
 stretch_mode = 1
 
 [node name="GrassTop" type="TextureRect" parent="Visuals"]
+offset_top = -10.0
 offset_right = 576.0
-offset_bottom = 16.0
+offset_bottom = 6.0
 mouse_filter = 2
 texture_filter = 1
 texture_repeat = 2

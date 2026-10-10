@@ -4,6 +4,8 @@ const HOME_SCENE := "res://ui/screens/start/start_screen.tscn"
 const CAMERA_SCENE := "res://ui/screens/calibration/calibration_screen.tscn"
 const MAP_SELECTION_SCENE := "res://ui/screens/map_selection/level_selection.tscn"
 
+@export var trigger_path: NodePath = ^"UI/SettingsButton"
+
 var _previous_pause := false
 var _pending_scene := ""
 var _trigger: Button
@@ -17,7 +19,7 @@ var _trigger: Button
 
 
 func _ready() -> void:
-	_trigger = get_parent().get_node("UI/SettingsButton") as Button
+	_trigger = get_parent().get_node(trigger_path) as Button
 	_trigger.pressed.connect(open_menu)
 	volume.value_changed.connect(_on_volume_changed)
 	mute.toggled.connect(_on_mute_toggled)
@@ -27,6 +29,10 @@ func _ready() -> void:
 	$Overlay/Center/Panel/Margin/Contents/Camera.pressed.connect(_request_navigation.bind(CAMERA_SCENE))
 	confirm.confirmed.connect(_navigate)
 	confirm.canceled.connect(resume.grab_focus)
+	if get_parent().get_node_or_null("ExerciseSession") == null:
+		resume.text = "ĐÓNG"
+		$Overlay/Center/Panel/Margin/Contents/Hint.text = "Thiết lập chung của trò chơi"
+		$Overlay/Center/Panel/Margin/Contents/Home.hide()
 	overlay.hide()
 
 
@@ -34,8 +40,11 @@ func open_menu() -> void:
 	if overlay.visible:
 		return
 	_previous_pause = get_tree().paused
+	var session := get_parent().get_node_or_null("ExerciseSession")
+	if session != null:
+		session.set_menu_paused(true)
 	get_tree().paused = true
-	volume.set_value_no_signal(db_to_linear(AudioServer.get_bus_volume_db(0)) * 100.0)
+	volume.set_value_no_signal(Global.volume_percent)
 	mute.set_pressed_no_signal(AudioServer.is_bus_mute(0))
 	_update_volume_label(volume.value)
 	overlay.show()
@@ -46,6 +55,9 @@ func close_menu() -> void:
 	confirm.hide()
 	overlay.hide()
 	get_tree().paused = _previous_pause
+	var session := get_parent().get_node_or_null("ExerciseSession")
+	if session != null:
+		session.set_menu_paused(false)
 	_trigger.grab_focus()
 
 
@@ -60,12 +72,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _on_volume_changed(value: float) -> void:
-	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value / 100.0, 0.0001)))
+	Global.set_audio_settings(value, mute.button_pressed)
 	_update_volume_label(value)
 
 
 func _on_mute_toggled(enabled: bool) -> void:
-	AudioServer.set_bus_mute(0, enabled)
+	Global.set_audio_settings(volume.value, enabled)
 
 
 func _update_volume_label(value: float) -> void:
@@ -74,6 +86,9 @@ func _update_volume_label(value: float) -> void:
 
 func _request_navigation(scene_path: String) -> void:
 	_pending_scene = scene_path
+	if get_parent().get_node_or_null("ExerciseSession") == null:
+		_navigate()
+		return
 	confirm.dialog_text = "Rời màn chơi sẽ kết thúc lượt tập hiện tại.\nBạn có muốn tiếp tục?"
 	confirm.popup_centered()
 

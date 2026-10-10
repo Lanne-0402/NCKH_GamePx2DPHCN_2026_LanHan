@@ -52,7 +52,7 @@ func _run() -> void:
 	assert(session.state == ExerciseSession.State.COMPLETED)
 	assert(level.get_node("World/Map4ClimbTrack/Step_10/SummitVisual").visible)
 	var player_y: float = level.get_node("Player").global_position.y
-	var run_start_y: float = level.get_node("World/Map4ClimbTrack/Step_00/RunStart").global_position.y
+	var run_start_y: float = level.get_node("World/Map4ClimbTrack/Step_10/RunStart").global_position.y
 	assert(absf(player_y - run_start_y) <= 2.0)
 	assert(observed_hold_progress.has(1.0))
 

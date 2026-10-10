@@ -37,6 +37,7 @@ var _intro_running := false
 
 
 func _ready() -> void:
+	call_deferred("_mount_presentation")
 	result_panel.hide()
 	rest_label.hide()
 	countdown_label.hide()
@@ -82,6 +83,11 @@ func _ready() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
 		exercise_session.debug_skip_rest()
+
+func _mount_presentation() -> void:
+	var presentation = preload("res://ui/shared/game_presentation.gd").new()
+	presentation.name = "GamePresentation"
+	add_child(presentation)
 
 
 func _on_session_state_changed(current: ExerciseSession.State, _previous: ExerciseSession.State) -> void:

@@ -94,6 +94,7 @@ func _spawn_next_rock() -> void:
 	if not enabled or rocks_destroyed >= total_rocks or is_instance_valid(_current_rock):
 		return
 	_current_rock = ROCK_SCENE.instantiate()
+	_current_rock.set_rock_variant(rocks_destroyed)
 	_current_rock.position = spawn_position.position
 	_current_rock.configure_exercise_rock(action_zone.position.x, rock_approach_speed)
 	_current_rock.set_movement_enabled(_session_active)

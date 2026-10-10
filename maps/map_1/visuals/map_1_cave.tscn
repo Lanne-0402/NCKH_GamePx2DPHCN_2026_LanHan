@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/map_1/goal/cave_entrance.png" id="1_cave"]
+[ext_resource type="Texture2D" path="res://assets/map_1/goal/stone_mine_entrance.png" id="1_cave"]
 
 [node name="Map1EndCave" type="Node2D"]
 
@@ -11,7 +11,7 @@ polygon = PackedVector2Array(-78, 0, -62, -9, 62, -9, 78, 0)
 
 [node name="Entrance" type="Sprite2D" parent="."]
 position = Vector2(0, -64)
-scale = Vector2(2, 2)
+scale = Vector2(1, 1)
 texture_filter = 1
 texture = ExtResource("1_cave")
 
@@ -25,5 +25,5 @@ theme_override_colors/font_shadow_color = Color(0.08, 0.06, 0.03, 0.9)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
-text = "ĐÍCH MAP 1"
+text = "LỐI RA"
 horizontal_alignment = 1

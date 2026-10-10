@@ -29,7 +29,7 @@ var _jump_tween: Tween
 
 func _ready() -> void:
 	_collect_steps()
-	summit.hide()
+	summit.show()
 	call_deferred("_lock_player_at_current_step")
 
 
@@ -38,7 +38,7 @@ func setup_map(required_steps: int) -> void:
 	total_steps = maxi(required_steps, 1)
 	steps_completed = 0
 	_current_step_index = 0
-	summit.hide()
+	summit.show()
 	_set_action_window(false)
 	_begin_step(0)
 	climb_progress_changed.emit(steps_completed, total_steps)

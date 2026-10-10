@@ -14,3 +14,14 @@ script = ExtResource("1_4flbx")
 [node name="Bone" type="CollisionShape2D" parent="." unique_id=98635658]
 position = Vector2(0, -36)
 shape = SubResource("RectangleShape2D_s7wsd")
+
+; Fixed world-space foot pivot. Future artwork uses 64x64 frames at 2x.
+[node name="FootAnchor" type="Marker2D" parent="."]
+
+[node name="SpriteFrame" type="ReferenceRect" parent="."]
+visible = false
+offset_left = -64.0
+offset_top = -128.0
+offset_right = 64.0
+mouse_filter = 2
+border_color = Color(0.3, 1, 0.6, 1)

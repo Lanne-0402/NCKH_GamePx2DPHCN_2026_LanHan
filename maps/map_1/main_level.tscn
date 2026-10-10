@@ -11,7 +11,7 @@
 [ext_resource type="PackedScene" path="res://maps/map_1/visuals/map_1_cave.tscn" id="9_cave"]
 [ext_resource type="PackedScene" path="res://maps/map_1/placeholders/map_1_pose_guide.tscn" id="10_pose"]
 [ext_resource type="Script" path="res://core/exercise/tracking_stability.gd" id="11_stability"]
-[ext_resource type="Theme" path="res://assets/map_1/ui/map1_theme.tres" id="12_theme"]
+[ext_resource type="Theme" path="res://assets/shared/ui/game_theme.tres" id="12_theme"]
 
 [node name="Main_Level" type="Node2D" unique_id=2095594473]
 script = ExtResource("1_bhu08")
@@ -54,6 +54,12 @@ autostart = true
 [node name="SettingsMenu" parent="." instance=ExtResource("settings_menu")]
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1675191219]
+
+[node name="HudBacking" type="ColorRect" parent="UI"]
+offset_right = 1152.0
+offset_bottom = 210.0
+mouse_filter = 2
+color = Color(0.92, 0.89, 0.78, 0.93)
 
 [node name="ScoreLabel" type="Label" parent="UI" unique_id=1287988699]
 offset_left = 792.0
@@ -114,8 +120,8 @@ horizontal_alignment = 1
 [node name="SettingsButton" type="Button" parent="UI"]
 offset_left = 24.0
 offset_top = 20.0
-offset_right = 72.0
-offset_bottom = 68.0
+offset_right = 76.0
+offset_bottom = 72.0
 tooltip_text = "Cài đặt"
 theme_override_font_sizes/font_size = 20
 icon = ExtResource("settings_gear")
@@ -205,7 +211,10 @@ offset_left = 20.0
 offset_top = 600.0
 offset_right = 740.0
 offset_bottom = 635.0
-theme_override_colors/font_color = Color(0.15, 0.15, 0.15, 1)
+theme_override_colors/font_color = Color(0.97, 0.95, 0.86, 1)
+theme_override_colors/font_shadow_color = Color(0.10, 0.12, 0.08, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 14
 text = "MOCK: R = rep đúng | F = rep sai | T = tracking | K = kết nối | N = bỏ qua nghỉ"
 

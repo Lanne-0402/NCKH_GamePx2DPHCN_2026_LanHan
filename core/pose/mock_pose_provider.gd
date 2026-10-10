@@ -22,6 +22,13 @@ var _pose_frame_counter := 0
 var _pose_frame_accumulator := 0.0
 var _pose_fps := 15.0
 var last_exercise_request: Dictionary = {}
+var _movement_generation := 0
+var _hold_running := false
+
+
+func _cancel_movement() -> void:
+	_movement_generation += 1
+	_hold_running = false
 
 
 func _ready() -> void:
@@ -96,6 +103,7 @@ func open_connection() -> void:
 
 
 func close_connection() -> void:
+	_cancel_movement()
 	if not _connected:
 		return
 
@@ -117,6 +125,7 @@ func start_calibration(request: Dictionary) -> void:
 
 
 func start_exercise(request: Dictionary) -> void:
+	_cancel_movement()
 	last_exercise_request = request.duplicate(true)
 	active_session_id = str(request.get("session_id", active_session_id))
 	active_exercise_id = str(request.get("exercise_id", DEFAULT_EXERCISE_ID))
@@ -126,6 +135,7 @@ func start_exercise(request: Dictionary) -> void:
 
 
 func pause_exercise(_reason := "user_paused") -> void:
+	_cancel_movement()
 	_paused = true
 
 
@@ -134,6 +144,7 @@ func resume_exercise() -> void:
 
 
 func stop_exercise(_reason := "user_cancelled") -> void:
+	_cancel_movement()
 	_paused = false
 	_calibrating = false
 	active_exercise_id = ""
@@ -144,6 +155,8 @@ func set_tracking(enabled: bool) -> void:
 	if not _connected:
 		return
 	_tracking = enabled
+	if not enabled:
+		_cancel_movement()
 	handle_message(_make_message("tracking_status", {
 		"status": "tracking" if enabled else "no_person",
 		"person_detected": enabled,
@@ -216,8 +229,10 @@ func _emit_standard_valid_rep() -> void:
 
 
 func simulate_valid_hold(step_seconds := 1.0) -> void:
-	if not _can_simulate_movement():
+	if _hold_running or not _can_simulate_movement():
 		return
+	_hold_running = true
+	var generation := _movement_generation
 	_rep_counter += 1
 	var candidate_id := "mock-rep-%04d" % _rep_counter
 	var target_ms := int(last_exercise_request.get("hold_duration_ms", 5000))
@@ -229,6 +244,8 @@ func simulate_valid_hold(step_seconds := 1.0) -> void:
 		"feedback_code": "HOLD_STARTED",
 	})
 	for step in range(1, steps + 1):
+		if generation != _movement_generation:
+			return
 		if not _connected or not _tracking or _paused or active_exercise_id.is_empty():
 			_emit_exercise_event("hold_interrupted", candidate_id, {
 				"hold_target_ms": target_ms,
@@ -237,6 +254,8 @@ func simulate_valid_hold(step_seconds := 1.0) -> void:
 			return
 		if step_seconds > 0.0:
 			await get_tree().create_timer(step_seconds, false).timeout
+		if generation != _movement_generation:
+			return
 		var elapsed_ms := int(round(float(target_ms) * float(step) / float(steps)))
 		_emit_exercise_event("hold_progress", candidate_id, {
 			"hold_elapsed_ms": elapsed_ms,
@@ -244,6 +263,7 @@ func simulate_valid_hold(step_seconds := 1.0) -> void:
 			"hold_progress": float(step) / float(steps),
 			"feedback_code": "HOLD_PROGRESS",
 		})
+	_hold_running = false
 	_emit_exercise_event("hold_completed", candidate_id, {
 		"hold_target_ms": target_ms,
 		"feedback_code": "HOLD_COMPLETED",
@@ -260,6 +280,7 @@ func simulate_valid_hold(step_seconds := 1.0) -> void:
 func simulate_rejected_hold(feedback_code := "HOLD_INTERRUPTED") -> void:
 	if not _can_simulate_movement():
 		return
+	_cancel_movement()
 	_rep_counter += 1
 	var candidate_id := "mock-rep-%04d" % _rep_counter
 	var target_ms := int(last_exercise_request.get("hold_duration_ms", 5000))
@@ -351,15 +372,8 @@ func _emit_exercise_event(event_name: String, candidate_id: String, extra: Dicti
 
 
 func _can_simulate_movement() -> bool:
-	if not _connected or _paused:
+	if not _connected or _paused or not _tracking or active_exercise_id.is_empty():
 		return false
-	if not _tracking:
-		set_tracking(true)
-	if active_exercise_id.is_empty():
-		start_exercise({
-			"session_id": "mock-session",
-			"exercise_id": DEFAULT_EXERCISE_ID,
-		})
 	return true
 
 
