@@ -35,6 +35,7 @@ var _intro_running := false
 
 
 func _ready() -> void:
+	call_deferred("_mount_presentation")
 	result_panel.hide()
 	rest_label.hide()
 	countdown_label.hide()
@@ -79,6 +80,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
 		exercise_session.debug_skip_rest()
 
+func _mount_presentation() -> void:
+	var presentation = preload("res://ui/shared/game_presentation.gd").new()
+	presentation.name = "GamePresentation"
+	add_child(presentation)
+
 
 func _on_session_state_changed(current: ExerciseSession.State, _previous: ExerciseSession.State) -> void:
 	state_label.text = "TRẠNG THÁI: %s" % _state_text(current)
@@ -102,8 +108,10 @@ func _on_session_feedback_changed(code: String) -> void:
 	if code == "SESSION_READY" and not map3_controller.is_action_window_open():
 		display_code = "WALLS_CLOSING"
 	feedback_label.text = _feedback_text(display_code)
-	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED"]:
+	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "PUSH_SUCCESS", "PREP_COMPLETED"]:
 		feedback_label.modulate = Color(0.1, 0.75, 0.2)
+	elif display_code in ["TRANSITION_DELAY_3", "TRANSITION_DELAY_2", "TRANSITION_DELAY_1", "PREP_POSITION", "OPEN_ARMS"]:
+		feedback_label.modulate = Color(0.2, 0.8, 1.0)
 	elif display_code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "TRACKING_LOST", "BACKEND_DISCONNECTED"]:
 		feedback_label.modulate = Color(0.9, 0.2, 0.1)
 	else:
@@ -147,7 +155,7 @@ func _on_session_completed(summary: Dictionary) -> void:
 	var unlock_text := "Chưa mở cấp độ tiếp theo."
 	if _difficulty_level() >= 3:
 		unlock_text = "Đã hoàn thành cấp độ cao nhất."
-	elif stability >= 2:
+	elif not TrackingStability.ENABLED or stability >= 2:
 		unlock_text = "Cấp độ tiếp theo đã sẵn sàng."
 	result_label.text = "HOÀN THÀNH MAP 3\n\nLần đẩy hợp lệ: %d\nLần chưa hợp lệ: %d\nSố hiệp: %d\nỔn định còn lại: %d/3\nĐánh giá: %s\n%s" % [
 		int(summary.get("valid_reps", 0)),
@@ -157,6 +165,8 @@ func _on_session_completed(summary: Dictionary) -> void:
 		_stability_evaluation(stability),
 		unlock_text,
 	]
+	if not TrackingStability.ENABLED:
+		result_label.text = result_label.text.replace("Ổn định còn lại: %d/3\n" % stability, "")
 	result_panel.show()
 
 
@@ -251,7 +261,7 @@ func _difficulty_level() -> int:
 
 
 func _unlock_next_difficulty(stability: int) -> bool:
-	if stability < 2 or _difficulty_level() >= 3:
+	if (TrackingStability.ENABLED and stability < 2) or _difficulty_level() >= 3:
 		return false
 	var previous_highest: int = Global.get_highest_unlocked_level(3)
 	Global.unlock_level_for_action(3, _difficulty_level() + 1)
@@ -259,6 +269,8 @@ func _unlock_next_difficulty(stability: int) -> bool:
 
 
 func _stability_evaluation(stability: int) -> String:
+	if not TrackingStability.ENABLED:
+		return "HOÀN THÀNH"
 	if stability >= 3:
 		return "HOÀN HẢO"
 	if stability == 2:
@@ -287,14 +299,22 @@ func _state_text(value: ExerciseSession.State) -> String:
 func _feedback_text(code: String) -> String:
 	const TEXTS := {
 		"SESSION_READY": "Sẵn sàng thực hiện động tác.",
-		"WALLS_CLOSING": "Tường gai đang siết vào. Hãy chuẩn bị dạng tay.",
-		"ACTION_ZONE_READY": "Tường đã dừng. Dạng hai tay sang hai bên và giữ 5 giây.",
+		"WALLS_CLOSING": "Tường gai đang siết vào. Hãy chuẩn bị khép tay.",
+		"ACTION_ZONE_READY": "Hãy vào tư thế chuẩn bị (khép 2 khuỷu tay và bàn tay úp vào nhau).",
+		"PREP_POSITION": "Hãy vào tư thế chuẩn bị (khép 2 khuỷu tay và bàn tay úp vào nhau).",
+		"PREP_COMPLETED": "Đã vào thế chuẩn bị! Chuẩn bị từ từ dạng 2 cánh tay sang 2 bên.",
+		"TRANSITION_DELAY_3": "Từ từ dạng 2 cánh tay sang 2 bên: 3 giây...",
+		"TRANSITION_DELAY_2": "Từ từ dạng 2 cánh tay sang 2 bên: 2 giây...",
+		"TRANSITION_DELAY_1": "Từ từ dạng 2 cánh tay sang 2 bên: 1 giây...",
+		"OPEN_ARMS": "Dạng 2 cánh tay mở rộng sang 2 bên để đẩy tường!",
 		"MOVEMENT_STARTED": "Đã nhận chuyển động.",
 		"TARGET_REACHED": "Đúng tư thế. Bắt đầu giữ 5 giây.",
-		"HOLD_STARTED": "Giữ nguyên tư thế...",
+		"HOLD_STARTED": "Giữ nguyên tư thế dạng tay — sóng năng lượng đang đẩy tường...",
 		"HOLD_PROGRESS": "Tiếp tục giữ — sóng năng lượng đang đẩy tường lùi.",
 		"HOLD_COMPLETED": "Đã giữ đủ 5 giây!",
 		"HOLD_INTERRUPTED": "Tư thế bị gián đoạn. Hãy thử lại chậm rãi.",
+		"PUSH_SUCCESS": "Tuyệt vời! Đã kích hoạt sóng năng lượng đẩy lùi 2 bức tường!",
+		"RETURN_TO_PREP": "Khép hai tay lại để chuẩn bị cho lần đẩy tiếp theo.",
 		"REP_VALID": "Tốt lắm! Tường đã bị đẩy lùi thành công.",
 		"MOVEMENT_TOO_FAST": "Cử động quá nhanh. Hãy thực hiện chậm hơn.",
 		"REP_REJECTED": "Lần tập chưa hợp lệ.",

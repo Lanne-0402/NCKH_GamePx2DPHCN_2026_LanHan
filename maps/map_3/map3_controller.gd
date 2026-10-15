@@ -12,14 +12,13 @@ const DIRECTION_SEQUENCE: Array[WallDirection] = [
 	WallDirection.HORIZONTAL,
 	WallDirection.VERTICAL,
 	WallDirection.DIAGONAL_RIGHT,
-	WallDirection.DIAGONAL_LEFT,
 ]
 
 const DIRECTION_NAMES := {
 	WallDirection.HORIZONTAL: "TRÁI - PHẢI",
 	WallDirection.VERTICAL: "TRÊN - DƯỚI",
-	WallDirection.DIAGONAL_RIGHT: "CHÉO PHẢI 45°",
-	WallDirection.DIAGONAL_LEFT: "CHÉO TRÁI 45°",
+	WallDirection.DIAGONAL_RIGHT: "HAI BÊN CHÉO 45°",
+	WallDirection.DIAGONAL_LEFT: "HAI BÊN CHÉO 45°",
 }
 
 const CENTER := Vector2(576.0, 320.0)
@@ -168,32 +167,15 @@ func _apply_wall_positions(close_t: float, retreat_t: float) -> void:
 			var bottom_y := lerpf(760.0, CENTER.y + gap * 0.5, close_t)
 			wall_a.position = Vector2(CENTER.x, top_y)
 			wall_b.position = Vector2(CENTER.x, bottom_y)
-		WallDirection.DIAGONAL_RIGHT:
+		WallDirection.DIAGONAL_RIGHT, WallDirection.DIAGONAL_LEFT:
+			# Both upper halves mirrored across the player; no lower buried wall.
 			wall_a.rotation = PI * 0.25
-			wall_b.rotation = -PI * 0.75
-			var offset := gap * 0.35
-			var start_a := Vector2(-180.0, 760.0)
-			var safe_a := CENTER + Vector2(-offset, offset)
-			var start_b := Vector2(1332.0, -120.0)
-			var safe_b := CENTER + Vector2(offset, -offset)
-			wall_a.position = start_a.lerp(safe_a, close_t)
-			wall_b.position = start_b.lerp(safe_b, close_t)
-			if retreat_t > 0.0:
-				wall_a.position = safe_a.lerp(start_a, retreat_t * 0.65)
-				wall_b.position = safe_b.lerp(start_b, retreat_t * 0.65)
-		WallDirection.DIAGONAL_LEFT:
-			wall_a.rotation = -PI * 0.25
 			wall_b.rotation = PI * 0.75
-			var offset := gap * 0.35
-			var start_a := Vector2(-180.0, -120.0)
-			var safe_a := CENTER + Vector2(-offset, -offset)
-			var start_b := Vector2(1332.0, 760.0)
-			var safe_b := CENTER + Vector2(offset, offset)
-			wall_a.position = start_a.lerp(safe_a, close_t)
-			wall_b.position = start_b.lerp(safe_b, close_t)
-			if retreat_t > 0.0:
-				wall_a.position = safe_a.lerp(start_a, retreat_t * 0.65)
-				wall_b.position = safe_b.lerp(start_b, retreat_t * 0.65)
+			var offset_x := lerpf(190.0,370.0,retreat_t)
+			var height := lerpf(170.0,100.0,retreat_t)
+			wall_a.position = Vector2(-160,-160).lerp(Vector2(CENTER.x-offset_x,height),close_t)
+			wall_b.position = Vector2(1312,-160).lerp(Vector2(CENTER.x+offset_x,height),close_t)
+
 
 
 func _update_energy_wave(progress: float) -> void:

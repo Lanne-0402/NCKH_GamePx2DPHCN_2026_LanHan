@@ -29,7 +29,7 @@ var _jump_tween: Tween
 
 func _ready() -> void:
 	_collect_steps()
-	summit.hide()
+	summit.show()
 	call_deferred("_lock_player_at_current_step")
 
 
@@ -38,7 +38,7 @@ func setup_map(required_steps: int) -> void:
 	total_steps = maxi(required_steps, 1)
 	steps_completed = 0
 	_current_step_index = 0
-	summit.hide()
+	summit.show()
 	_set_action_window(false)
 	_begin_step(0)
 	climb_progress_changed.emit(steps_completed, total_steps)
@@ -190,6 +190,9 @@ func _play_jump_to(step_index: int) -> void:
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _jump_tween.finished
 	_set_player_locked_position(target)
+	player.mk2.jump_progress = -1.0
+	player.mk2.amount = 0.0
+	player.mk2.refresh()
 
 
 func _apply_jump_arc(progress: float, jump_state: Dictionary) -> void:
@@ -197,6 +200,8 @@ func _apply_jump_arc(progress: float, jump_state: Dictionary) -> void:
 	var apex: Vector2 = jump_state["apex"]
 	var target: Vector2 = jump_state["target"]
 	var t := clampf(progress, 0.0, 1.0)
+	player.mk2.jump_progress = t
+	player.mk2.refresh()
 	var inv := 1.0 - t
 	var pos := start * (inv * inv) + apex * (2.0 * inv * t) + target * (t * t)
 	_set_player_locked_position(pos)

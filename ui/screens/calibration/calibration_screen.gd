@@ -16,6 +16,8 @@ var _session_id := ""
 @onready var confidence_label: Label = $PoseStatusPanel/MarginContainer/VBoxContainer/ConfidenceLabel
 @onready var feedback_label: Label = $PoseStatusPanel/MarginContainer/VBoxContainer/FeedbackLabel
 
+var _camera_texture_rect: TextureRect
+
 
 func _ready() -> void:
 	PoseInput.connection_changed.connect(_on_connection_changed)
@@ -23,6 +25,9 @@ func _ready() -> void:
 	PoseInput.calibration_progressed.connect(_on_calibration_progressed)
 	PoseInput.calibration_finished.connect(_on_calibration_finished)
 	PoseInput.provider_error_received.connect(_on_provider_error_received)
+	PoseInput.camera_frame_received.connect(_on_camera_frame_received)
+
+	_setup_camera_preview()
 
 	progress_bar.value = 0.0
 	next_button.disabled = true
@@ -32,6 +37,43 @@ func _ready() -> void:
 		_on_tracking_status_changed(PoseInput.last_tracking_status)
 	else:
 		_update_start_button()
+
+
+func _setup_camera_preview() -> void:
+	var color_rect2: ColorRect = $ColorRect2
+	_camera_texture_rect = TextureRect.new()
+	_camera_texture_rect.name = "CalibrationCameraRect"
+	_camera_texture_rect.position = color_rect2.position
+	_camera_texture_rect.size = color_rect2.size
+	_camera_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_camera_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_camera_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_camera_texture_rect)
+	move_child(_camera_texture_rect, color_rect2.get_index() + 1)
+
+	# Giup chu noi bat va de doc ro tren nen video camera
+	introduce.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	introduce.add_theme_color_override("font_color", Color.WHITE)
+	introduce.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	introduce.add_theme_constant_override("shadow_outline_size", 5)
+	$Label2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	$Label2.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
+	$Label2.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	$Label2.add_theme_constant_override("shadow_outline_size", 5)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_F3:
+		var panel = get_node_or_null("PoseStatusPanel")
+		if panel:
+			panel.visible = not panel.visible
+
+
+func _on_camera_frame_received(image: Image) -> void:
+	if is_instance_valid(_camera_texture_rect):
+		_camera_texture_rect.texture = ImageTexture.create_from_image(image)
 
 
 func _on_start_calib_button_pressed() -> void:

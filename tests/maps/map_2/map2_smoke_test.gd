@@ -66,9 +66,9 @@ func _run() -> void:
 	assert(int(stability.stability) == 3)
 	PoseInput.set_tracking(false)
 	await get_tree().create_timer(0.08).timeout
-	assert(int(stability.stability) == 2)
+	assert(int(stability.stability) == (2 if TrackingStability.ENABLED else 3))
 	await get_tree().create_timer(0.08).timeout
-	assert(int(stability.stability) == 2)
+	assert(int(stability.stability) == (2 if TrackingStability.ENABLED else 3))
 	PoseInput.set_tracking(true)
 	await get_tree().process_frame
 	assert(session.state == ExerciseSession.State.ACTIVE)
@@ -76,11 +76,11 @@ func _run() -> void:
 	PoseInput.close_connection()
 	await get_tree().create_timer(0.08).timeout
 	assert(session.state == ExerciseSession.State.TRACKING_LOST)
-	assert(int(stability.stability) == 2)
+	assert(int(stability.stability) == (2 if TrackingStability.ENABLED else 3))
 	PoseInput.open_connection()
 	await get_tree().process_frame
 	assert(session.state == ExerciseSession.State.ACTIVE)
-	assert(int(stability.stability) == 2)
+	assert(int(stability.stability) == (2 if TrackingStability.ENABLED else 3))
 	assert(map2.is_action_window_open())
 
 	# Complete 2 phases x 5 holds. Only rep_completed advances progress.
@@ -100,7 +100,7 @@ func _run() -> void:
 	assert(session.state == ExerciseSession.State.COMPLETED)
 	assert(observed_hold_progress.has(0.2))
 	assert(observed_hold_progress.has(1.0))
-	assert(int(stability.stability) == 2)
+	assert(int(stability.stability) == (2 if TrackingStability.ENABLED else 3))
 
 	await get_tree().create_timer(1.1).timeout
 	assert(level.get_node("UI/ResultPanel").visible)

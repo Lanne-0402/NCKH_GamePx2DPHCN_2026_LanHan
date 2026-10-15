@@ -34,6 +34,7 @@ var _intro_running := false
 
 
 func _ready() -> void:
+	call_deferred("_mount_presentation")
 	result_panel.hide()
 	rest_label.hide()
 	countdown_label.hide()
@@ -77,6 +78,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
 		exercise_session.debug_skip_rest()
 
+func _mount_presentation() -> void:
+	var presentation = preload("res://ui/shared/game_presentation.gd").new()
+	presentation.name = "GamePresentation"
+	add_child(presentation)
+
 
 func _on_session_state_changed(current: ExerciseSession.State, _previous: ExerciseSession.State) -> void:
 	state_label.text = "TRẠNG THÁI: %s" % _state_text(current)
@@ -100,8 +106,10 @@ func _on_session_feedback_changed(code: String) -> void:
 	if code == "SESSION_READY" and not map2_controller.is_action_window_open():
 		display_code = "SLAB_DESCENDING"
 	feedback_label.text = _feedback_text(display_code)
-	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED"]:
+	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "LIFT_SUCCESS", "PREP_COMPLETED"]:
 		feedback_label.modulate = Color(0.1, 0.75, 0.2)
+	elif display_code in ["TRANSITION_DELAY_3", "TRANSITION_DELAY_2", "TRANSITION_DELAY_1", "PREP_POSITION", "REACH_OVERHEAD"]:
+		feedback_label.modulate = Color(0.2, 0.8, 1.0)
 	elif display_code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "TRACKING_LOST", "BACKEND_DISCONNECTED"]:
 		feedback_label.modulate = Color(0.9, 0.2, 0.1)
 	else:
@@ -145,7 +153,7 @@ func _on_session_completed(summary: Dictionary) -> void:
 	var unlock_text := "Chưa mở cấp độ tiếp theo."
 	if _difficulty_level() >= 3:
 		unlock_text = "Đã hoàn thành cấp độ cao nhất."
-	elif stability >= 2:
+	elif not TrackingStability.ENABLED or stability >= 2:
 		unlock_text = "Cấp độ tiếp theo đã sẵn sàng."
 	result_label.text = "HOÀN THÀNH MAP 2\n\nLần nâng hợp lệ: %d\nLần chưa hợp lệ: %d\nSố hiệp: %d\nỔn định còn lại: %d/3\nĐánh giá: %s\n%s" % [
 		int(summary.get("valid_reps", 0)),
@@ -155,6 +163,8 @@ func _on_session_completed(summary: Dictionary) -> void:
 		_stability_evaluation(stability),
 		unlock_text,
 	]
+	if not TrackingStability.ENABLED:
+		result_label.text = result_label.text.replace("Ổn định còn lại: %d/3\n" % stability, "")
 	result_panel.show()
 
 
@@ -174,10 +184,9 @@ func _on_tracking_penalty_applied(_current: int, grace_seconds: float) -> void:
 	feedback_label.text = "Tracking gián đoạn quá %d giây: giảm 1 điểm Ổn định." % ceili(grace_seconds)
 
 
-func _on_action_window_changed(is_open: bool) -> void:
-	exercise_session.set_repetition_input_enabled(is_open)
-	if is_open:
-		feedback_label.text = _feedback_text("ACTION_ZONE_READY")
+func _on_action_window_changed(_is_open: bool) -> void:
+	# Duy trì nhận diện liên tục suốt phiên tập Map 2 để tránh ngắt kết nối và giật lag
+	pass
 
 
 func _show_intro() -> void:
@@ -267,13 +276,21 @@ func _feedback_text(code: String) -> String:
 	const TEXTS := {
 		"SESSION_READY": "Sẵn sàng thực hiện động tác.",
 		"SLAB_DESCENDING": "Phiến đá đang hạ xuống vị trí an toàn.",
-		"ACTION_ZONE_READY": "Đá đã dừng. Duỗi hai tay lên và bắt đầu giữ.",
+		"ACTION_ZONE_READY": "Đá đã dừng. Hãy vào tư thế chuẩn bị (hai tay gập vuông góc).",
+		"PREP_POSITION": "Hãy vào tư thế chuẩn bị (hai tay gập vuông góc chữ U).",
+		"PREP_COMPLETED": "Đã vào thế chuẩn bị! Chuẩn bị trượt vươn hai tay lên cao.",
+		"TRANSITION_DELAY_3": "Từ từ trượt vươn hai tay lên cao: 3 giây...",
+		"TRANSITION_DELAY_2": "Từ từ trượt vươn hai tay lên cao: 2 giây...",
+		"TRANSITION_DELAY_1": "Từ từ trượt vươn hai tay lên cao: 1 giây...",
+		"REACH_OVERHEAD": "Hãy vươn hai tay lên cao trên đầu để nâng đá!",
+		"LIFT_SUCCESS": "Tuyệt vời! Đã đẩy thành công tảng đá!",
 		"MOVEMENT_STARTED": "Đã nhận chuyển động.",
 		"TARGET_REACHED": "Đúng tư thế. Bắt đầu giữ 5 giây.",
-		"HOLD_STARTED": "Giữ nguyên tư thế...",
+		"HOLD_STARTED": "Giữ nguyên tư thế nâng đá...",
 		"HOLD_PROGRESS": "Tiếp tục giữ chậm và ổn định.",
 		"HOLD_COMPLETED": "Đã giữ đủ 5 giây!",
 		"HOLD_INTERRUPTED": "Tư thế bị gián đoạn. Hãy thử lại chậm rãi.",
+		"RETURN_TO_PREP": "Hạ hai tay xuống để chuẩn bị cho lần tiếp theo.",
 		"REP_VALID": "Tốt lắm! Đã nâng thành công một lần.",
 		"MOVEMENT_TOO_FAST": "Cử động quá nhanh. Hãy thực hiện chậm hơn.",
 		"REP_REJECTED": "Lần tập chưa hợp lệ.",

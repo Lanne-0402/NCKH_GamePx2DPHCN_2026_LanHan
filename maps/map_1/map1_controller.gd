@@ -47,7 +47,8 @@ func penalize_tracking_loss() -> int:
 
 func set_session_active(active: bool) -> void:
 	_session_active = active
-	player.set_running(active)
+	player.set_running(active and not _action_window_open)
+	player.mk2.charging = active and _action_window_open
 	if is_instance_valid(_current_rock):
 		_current_rock.set_movement_enabled(active and not _action_window_open)
 	elif enabled and active and rocks_destroyed < total_rocks:
@@ -94,6 +95,7 @@ func _spawn_next_rock() -> void:
 	if not enabled or rocks_destroyed >= total_rocks or is_instance_valid(_current_rock):
 		return
 	_current_rock = ROCK_SCENE.instantiate()
+	_current_rock.set_rock_variant(rocks_destroyed)
 	_current_rock.position = spawn_position.position
 	_current_rock.configure_exercise_rock(action_zone.position.x, rock_approach_speed)
 	_current_rock.set_movement_enabled(_session_active)
@@ -124,6 +126,8 @@ func _set_action_window(is_open: bool) -> void:
 	if _action_window_open == is_open:
 		return
 	_action_window_open = is_open
+	player.set_running(_session_active and not is_open)
+	player.mk2.charging = _session_active and is_open
 	action_window_changed.emit(is_open)
 
 

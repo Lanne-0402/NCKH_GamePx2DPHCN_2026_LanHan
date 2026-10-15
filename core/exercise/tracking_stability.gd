@@ -1,6 +1,9 @@
 class_name TrackingStability
 extends Node
 
+# Temporary feature switch: set true to restore hearts and stability-based grading.
+const ENABLED := false
+
 signal stability_changed(current: int, maximum: int)
 signal tracking_penalty_applied(current: int, grace_seconds: float)
 
@@ -30,12 +33,16 @@ func reset() -> void:
 
 
 func penalize_tracking_loss() -> int:
+	if not ENABLED:
+		return stability
 	stability = maxi(stability - 1, 0)
 	stability_changed.emit(stability, maximum_stability)
 	return stability
 
 
 func _on_session_state_changed(current: ExerciseSession.State, previous: ExerciseSession.State) -> void:
+	if not ENABLED:
+		return
 	if current == ExerciseSession.State.ACTIVE:
 		_incident_active = false
 		_incident_token += 1
@@ -52,7 +59,7 @@ func _on_session_state_changed(current: ExerciseSession.State, previous: Exercis
 
 func _apply_penalty_after_grace(incident_token: int) -> void:
 	await get_tree().create_timer(grace_seconds, false).timeout
-	if incident_token != _incident_token \
+	if not ENABLED or incident_token != _incident_token \
 			or not _incident_active \
 			or _session.state != ExerciseSession.State.TRACKING_LOST \
 			or not _pose_input.provider_connected:

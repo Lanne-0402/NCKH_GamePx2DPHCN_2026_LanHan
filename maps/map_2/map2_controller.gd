@@ -51,7 +51,7 @@ func set_hold_progress(progress: float) -> void:
 	if not _action_window_open:
 		return
 	var clamped := clampf(progress, 0.0, 1.0)
-	slab.position.y = lerpf(slab_support_y, slab_support_y - 24.0, clamped)
+	slab.position.y = lerpf(slab_support_y, slab_support_y - 24.0, clampf((clamped-0.35)/0.65,0,1))
 	hold_visual_progress_changed.emit(clamped)
 
 

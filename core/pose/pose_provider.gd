@@ -12,6 +12,7 @@ signal calibration_finished(data: Dictionary)
 signal pose_frame_received(data: Dictionary)
 signal exercise_event_received(data: Dictionary)
 signal provider_error_received(data: Dictionary)
+signal camera_frame_received(image: Image)
 
 const CONTRACT_VERSION := "1.0.0"
 
@@ -56,8 +57,12 @@ func handle_message(message: Dictionary) -> bool:
 	if not _is_valid_envelope(message):
 		return false
 
-	var message_session := str(message.get("session_id", ""))
-	if not active_session_id.is_empty() \
+	var raw_session = message.get("session_id")
+	var message_session := "" if (raw_session == null or str(raw_session) == "<null>") else str(raw_session)
+	var msg_type := str(message.get("type", ""))
+
+	var is_session_scoped := (msg_type != "server_hello" and msg_type != "error" and msg_type != "tracking_status" and msg_type != "camera_frame")
+	if is_session_scoped and not active_session_id.is_empty() \
 			and not message_session.is_empty() \
 			and message_session != active_session_id:
 		return false
@@ -79,6 +84,13 @@ func handle_message(message: Dictionary) -> bool:
 			pose_frame_received.emit(payload)
 		"exercise_event":
 			exercise_event_received.emit(payload)
+		"camera_frame":
+			var b64 := str(payload.get("image", ""))
+			if not b64.is_empty():
+				var raw_bytes := Marshalls.base64_to_raw(b64)
+				var img := Image.new()
+				if img.load_jpg_from_buffer(raw_bytes) == OK:
+					camera_frame_received.emit(img)
 		"error":
 			provider_error_received.emit(payload)
 		_:

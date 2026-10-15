@@ -12,6 +12,18 @@ var _waiting_at_action_zone := false
 var _action_zone_x := 0.0
 var _exercise_approach_speed := 170.0
 
+func set_rock_variant(index: int) -> void:
+	var sprite: Sprite2D = $RockVisual/Base
+	if index % 2 == 1:
+		sprite.texture = preload("res://assets/shared/environment/moss_boulder.png")
+		sprite.scale = Vector2(2,2)
+		sprite.position = Vector2(0,-80)
+		var collision: CollisionShape2D = $CollisionShape2D
+		collision.shape = collision.shape.duplicate()
+		collision.shape.size = Vector2(108,132)
+		collision.position = Vector2(0,-66)
+	# Large variant keeps the foot anchor but gets a private matching collider.
+
 func _process(delta: float) -> void:
 	if _destroying or not _movement_enabled:
 		return
@@ -45,6 +57,22 @@ func destroy_by_exercise() -> void:
 	_destroying = true
 	monitoring = false
 	$CollisionShape2D.set_deferred("disabled", true)
+	var fragments := Node2D.new()
+	fragments.position = position + Vector2(0,-40)
+	get_parent().add_child(fragments)
+	for i in range(7):
+		var chip := Polygon2D.new()
+		chip.polygon = PackedVector2Array([Vector2(-6,-4),Vector2(5,-6),Vector2(7,3),Vector2(-3,6)])
+		chip.color = Color("96815a") if i%2 == 0 else Color("574b34")
+		fragments.add_child(chip)
+		var debris := fragments.create_tween().set_parallel(true)
+		debris.tween_property(chip,"position",Vector2((i-3)*24,-35-abs(i-3)*9),0.18)
+		debris.tween_property(chip,"rotation",float(i-3),0.5)
+		debris.chain().tween_property(chip,"position:y",55.0,0.32)
+		debris.parallel().tween_property(chip,"modulate:a",0.0,0.32)
+	var cleanup := fragments.create_tween()
+	cleanup.tween_interval(0.6)
+	cleanup.tween_callback(fragments.queue_free)
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(self, "scale", Vector2(1.5, 0.35), 0.25).set_trans(Tween.TRANS_BACK)
 	tween.tween_property(self, "modulate:a", 0.0, 0.25)

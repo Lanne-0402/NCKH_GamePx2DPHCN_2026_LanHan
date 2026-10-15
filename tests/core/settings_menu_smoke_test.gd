@@ -11,6 +11,7 @@ func _run() -> void:
 	for map_id in range(1, 6):
 		Global.selected_action = map_id
 		var level: Node = load("res://maps/map_%d/main_level.tscn" % map_id).instantiate()
+		level.process_mode = Node.PROCESS_MODE_PAUSABLE
 		level.countdown_step_seconds = 0.03
 		add_child(level)
 		await get_tree().process_frame
@@ -18,16 +19,14 @@ func _run() -> void:
 		var button: Button = level.get_node("UI/SettingsButton")
 		var state: Label = level.get_node("UI/ScoreLabel" if map_id == 1 else "UI/StateLabel")
 		var hearts: Label = level.get_node("UI/HeartsLabel")
-		assert(state.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER)
-		assert(hearts.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER)
-		assert(is_equal_approx(state.position.x + state.size.x / 2, hearts.position.x + hearts.size.x / 2))
+		assert(state.position.y >= 366 and state.position.x < 576)
+		assert(hearts.position.x >= 864 and hearts.position.y < 100)
 		assert(button.icon != null and not button.disabled)
 		if map_id == 5:
 			var bonus: Label = level.get_node("UI/BonusLabel")
 			var bonus_panel: Control = level.get_node("UI/BonusPanel")
-			assert(bonus.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER)
-			assert(is_equal_approx(bonus.position.x + bonus.size.x / 2, state.position.x + state.size.x / 2))
-			assert(is_equal_approx(bonus_panel.position.x + bonus_panel.size.x / 2, state.position.x + state.size.x / 2))
+			assert(bonus.position.y >= 366 and bonus.position.x < 576)
+			assert(not bonus_panel.visible)
 		level.get_node("UI/InstructionPanel/MarginContainer/VBoxContainer/StartExerciseButton").pressed.emit()
 		button.pressed.emit()
 		assert(get_tree().paused and menu.overlay.visible)

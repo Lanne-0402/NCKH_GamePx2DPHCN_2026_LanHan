@@ -37,6 +37,7 @@ var _intro_running := false
 
 
 func _ready() -> void:
+	call_deferred("_mount_presentation")
 	result_panel.hide()
 	rest_label.hide()
 	countdown_label.hide()
@@ -49,6 +50,7 @@ func _ready() -> void:
 	exercise_session.repetition_accepted.connect(_on_repetition_accepted)
 	exercise_session.repetition_rejected.connect(_on_repetition_rejected)
 	exercise_session.hold_progress_changed.connect(_on_hold_progress_changed)
+	exercise_session.hold_started.connect(_on_hold_started)
 	exercise_session.hold_interrupted.connect(_on_hold_interrupted)
 	exercise_session.rest_time_changed.connect(_on_rest_time_changed)
 	exercise_session.session_completed.connect(_on_session_completed)
@@ -82,6 +84,11 @@ func _ready() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
 		exercise_session.debug_skip_rest()
+
+func _mount_presentation() -> void:
+	var presentation = preload("res://ui/shared/game_presentation.gd").new()
+	presentation.name = "GamePresentation"
+	add_child(presentation)
 
 
 func _on_session_state_changed(current: ExerciseSession.State, _previous: ExerciseSession.State) -> void:
@@ -121,11 +128,17 @@ func _on_repetition_rejected(_data: Dictionary) -> void:
 	map5_controller.handle_hold_interrupted()
 
 
+func _on_hold_started(_data: Dictionary) -> void:
+	map5_controller.handle_hold_started()
+	feedback_label.text = _feedback_text("HOLD_STARTED")
+	feedback_label.modulate = Color(0.1, 0.75, 0.2)
+
+
 func _on_hold_progress_changed(progress: float, elapsed_ms: int, target_ms: int) -> void:
 	hold_bar.value = progress * 100.0
 	var elapsed_seconds := float(elapsed_ms) / 1000.0
 	var target_seconds := float(target_ms) / 1000.0
-	hold_label.text = "GIỮ CĂNG: %.1f/%.1f GIÂY" % [elapsed_seconds, target_seconds]
+	hold_label.text = "THIỀN GIỮ CĂNG: %.1f/%.1f GIÂY" % [elapsed_seconds, target_seconds]
 	map5_controller.set_hold_progress(progress)
 
 
@@ -136,7 +149,7 @@ func _on_hold_interrupted(_data: Dictionary) -> void:
 func _on_hold_visual_progress_changed(progress: float) -> void:
 	if progress <= 0.0:
 		hold_bar.value = 0.0
-		hold_label.text = "GIỮ CĂNG: 0.0/30.0 GIÂY"
+		hold_label.text = "THIỀN GIỮ CĂNG: 0.0/30.0 GIÂY"
 
 
 func _on_rest_time_changed(seconds_remaining: float) -> void:
@@ -150,7 +163,7 @@ func _on_session_completed(summary: Dictionary) -> void:
 	var unlock_text := "Chưa mở cấp độ tiếp theo."
 	if _difficulty_level() >= 3:
 		unlock_text = "Đã hoàn thành cấp độ cao nhất."
-	elif stability >= 2:
+	elif not TrackingStability.ENABLED or stability >= 2:
 		unlock_text = "Cấp độ tiếp theo đã sẵn sàng."
 	result_label.text = "HOÀN THÀNH MAP 5\n\nLần căng hợp lệ: %d\nLần chưa hợp lệ: %d\nĐiểm thưởng: %d/100\nỔn định còn lại: %d/3\nĐánh giá: %s\n%s" % [
 		int(summary.get("valid_reps", 0)),
@@ -160,6 +173,8 @@ func _on_session_completed(summary: Dictionary) -> void:
 		_stability_evaluation(stability),
 		unlock_text,
 	]
+	if not TrackingStability.ENABLED:
+		result_label.text = result_label.text.replace("Ổn định còn lại: %d/3\n" % stability, "")
 	result_panel.show()
 
 
@@ -261,7 +276,7 @@ func _difficulty_level() -> int:
 
 
 func _unlock_next_difficulty(stability: int) -> bool:
-	if stability < 2 or _difficulty_level() >= 3:
+	if (TrackingStability.ENABLED and stability < 2) or _difficulty_level() >= 3:
 		return false
 	var previous_highest: int = Global.get_highest_unlocked_level(5)
 	Global.unlock_level_for_action(5, _difficulty_level() + 1)
@@ -269,6 +284,8 @@ func _unlock_next_difficulty(stability: int) -> bool:
 
 
 func _stability_evaluation(stability: int) -> String:
+	if not TrackingStability.ENABLED:
+		return "HOÀN THÀNH"
 	if stability >= 3:
 		return "HOÀN HẢO"
 	if stability == 2:
@@ -297,18 +314,18 @@ func _state_text(value: ExerciseSession.State) -> String:
 func _feedback_text(code: String) -> String:
 	const TEXTS := {
 		"SESSION_READY": "Suối nước nóng sẵn sàng. Bắt đầu kéo căng nhẹ nhàng.",
-		"ACTION_ZONE_READY": "Kéo cánh tay qua ngực và giữ căng 30 giây.",
-		"MOVEMENT_STARTED": "Đã nhận chuyển động.",
-		"TARGET_REACHED": "Đúng tư thế. Bắt đầu giữ căng 30 giây.",
-		"HOLD_STARTED": "Giữ nguyên tư thế căng...",
-		"HOLD_PROGRESS": "Tiếp tục giữ — điểm thưởng đang tích lũy.",
-		"HOLD_COMPLETED": "Đã giữ căng đủ 30 giây!",
+		"ACTION_ZONE_READY": "Kéo cánh tay qua ngang ngực và giữ thế thiền 30 giây.",
+		"MOVEMENT_STARTED": "Đã nhận chuyển động kéo căng.",
+		"TARGET_REACHED": "Đúng tư thế! Bắt đầu thiền giữ căng 30 giây.",
+		"HOLD_STARTED": "Đang thiền và giữ căng 30 giây...",
+		"HOLD_PROGRESS": "Duy trì hơi thở đều đặn và giữ nguyên tư thế...",
+		"HOLD_COMPLETED": "Hoàn thành 30 giây thiền kéo căng!",
 		"HOLD_INTERRUPTED": "Tư thế bị gián đoạn. Hãy thả lỏng và thử lại chậm rãi.",
-		"REP_VALID": "Tốt lắm! Đã nhận điểm thưởng.",
+		"REP_VALID": "Tuyệt vời! Đã hoàn thành hiệp kéo căng.",
 		"MOVEMENT_TOO_FAST": "Cử động quá nhanh. Hãy kéo căng chậm hơn.",
 		"REP_REJECTED": "Lần căng chưa hợp lệ.",
-		"PHASE_REST": "Hoàn thành một bên. Hãy thư giãn 30 giây trước khi đổi tay.",
-		"NEXT_PHASE": "Bắt đầu căng bên tay còn lại.",
+		"PHASE_REST": "Hoàn thành hiệp 1. Hãy thư giãn 30 giây trước khi đổi sang tay còn lại.",
+		"NEXT_PHASE": "Bắt đầu hiệp 2: Kéo căng cánh tay còn lại qua ngực.",
 		"TRACKING_LOST": "Không nhìn thấy người chơi. Buổi tập đã tạm dừng.",
 		"TRACKING_RESTORED": "Đã nhận diện lại. Tiếp tục buổi tập.",
 		"BACKEND_DISCONNECTED": "Mất kết nối với hệ thống nhận diện.",

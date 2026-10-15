@@ -39,10 +39,11 @@ func _run() -> void:
 	assert(is_equal_approx(float(PoseInput.last_exercise_request.get("target_rom_value", 0.0)), 61.6))
 	assert(map1.rocks_destroyed == 0)
 	assert(map1.stability == 3)
-	assert(level.call("_stability_evaluation", 3) == "HOÀN HẢO")
+	assert(level.call("_stability_evaluation", 3) == ("HOÀN HẢO" if TrackingStability.ENABLED else "HOÀN THÀNH"))
 	assert(level.call("_stability_evaluation", 2) == "HOÀN THÀNH")
-	assert(not bool(level.call("_unlock_next_difficulty", 1)))
-	assert(Global.get_highest_unlocked_level(1) == 1)
+	if TrackingStability.ENABLED:
+		assert(not bool(level.call("_unlock_next_difficulty", 1)))
+		assert(Global.get_highest_unlocked_level(1) == 1)
 	assert(not map1.is_action_window_open())
 
 	# Repetitions sent while the rock is approaching must not be counted.
@@ -86,9 +87,9 @@ func _run() -> void:
 	PoseInput.set_tracking(false)
 	await get_tree().create_timer(0.08).timeout
 	assert(session.state == ExerciseSession.State.TRACKING_LOST)
-	assert(map1.stability == 2)
+	assert(map1.stability == (2 if TrackingStability.ENABLED else 3))
 	await get_tree().create_timer(0.08).timeout
-	assert(map1.stability == 2)
+	assert(map1.stability == (2 if TrackingStability.ENABLED else 3))
 	PoseInput.set_tracking(true)
 	await get_tree().process_frame
 	assert(session.state == ExerciseSession.State.ACTIVE)
@@ -98,11 +99,11 @@ func _run() -> void:
 	PoseInput.close_connection()
 	await get_tree().create_timer(0.08).timeout
 	assert(session.state == ExerciseSession.State.TRACKING_LOST)
-	assert(map1.stability == 2)
+	assert(map1.stability == (2 if TrackingStability.ENABLED else 3))
 	PoseInput.open_connection()
 	await get_tree().process_frame
 	assert(session.state == ExerciseSession.State.ACTIVE)
-	assert(map1.stability == 2)
+	assert(map1.stability == (2 if TrackingStability.ENABLED else 3))
 	assert(map1.is_action_window_open())
 
 	# One accepted backend event destroys exactly one rock.
@@ -130,7 +131,7 @@ func _run() -> void:
 	assert(session.state == ExerciseSession.State.COMPLETED)
 	assert(level.get_node("Map1EndCave").visible)
 	assert(is_equal_approx(level.get_node("Map1EndCave").position.y, 320.0))
-	assert(map1.stability == 2)
+	assert(map1.stability == (2 if TrackingStability.ENABLED else 3))
 
 	await get_tree().create_timer(2.0).timeout
 	assert(level.get_node("UI/ResultPanel").visible)

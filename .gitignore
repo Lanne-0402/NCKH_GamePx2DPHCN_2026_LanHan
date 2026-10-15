@@ -8,3 +8,17 @@ __MACOSX/
 # Temporary image/editor backups
 *.png~
 *.aseprite~
+
+# Generated test captures/profiles (never player saves)
+tests/visual_output/
+tests/visual/captures/
+tests/*.json
+tests/*.json.bak
+
+# Bỏ qua các thư mục build và đóng gói
+build/
+dist/
+*.zip
+*.exe
+__pycache__/
+.godot/
