@@ -18,17 +18,18 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_bottom = 18
 [node name="Column" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="Margin/Column"]
 layout_mode = 2
-text = "LỊCH SỬ BUỔI TẬP"
-theme_override_font_sizes/font_size = 28
+text = "BÁO CÁO TỔNG KẾT TUẦN & LỊCH SỬ TẬP"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 26
 [node name="Scroll" type="ScrollContainer" parent="Margin/Column"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -36,8 +37,11 @@ horizontal_scroll_mode = 0
 [node name="List" type="VBoxContainer" parent="Margin/Column/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 16
-[node name="Back" type="Button" parent="Margin/Column"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 44)
-text = "VỀ TRANG CHỦ"
+theme_override_constants/separation = 12
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 16.0
+offset_right = 228.0
+offset_bottom = 60.0
+text = "‹ VỀ TRANG CHỦ"

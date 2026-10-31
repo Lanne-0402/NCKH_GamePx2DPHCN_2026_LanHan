@@ -1,24 +1,34 @@
-# Godot editor cache
+# Godot editor cache & imports
 .godot/
+*.import
 
 # Operating-system metadata
 .DS_Store
+Thumbs.db
 __MACOSX/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.spec
+build/
+dist/
+*.egg-info/
+.venv/
+env/
+venv/
 
 # Temporary image/editor backups
 *.png~
 *.aseprite~
+*.tmp
+*.bak
 
-# Generated test captures/profiles (never player saves)
+# Generated test captures/profiles
 tests/visual_output/
 tests/visual/captures/
-tests/*.json
-tests/*.json.bak
 
-# Bỏ qua các thư mục build và đóng gói
-build/
-dist/
-*.zip
-*.exe
-__pycache__/
-.godot/
+# Backup folders
+-NCKH-*/
+*-backup*/

@@ -15,7 +15,7 @@ if not exist "pose_landmarker_full.task" (
 )
 
 echo [2/3] Dang thuc thi PyInstaller dong goi Backend (khoang 1-2 phut)...
-pyinstaller --noconfirm --onedir --console --add-data "pose_landmarker_full.task;." --distpath "build\dist" --workpath "build\work" --name ai_backend main.py
+pyinstaller --noconfirm --onedir --console --add-data "pose_landmarker_full.task;." --exclude-module torch --exclude-module torchvision --exclude-module scipy --exclude-module pandas --exclude-module matplotlib --exclude-module jedi --exclude-module tkinter --distpath "build\dist" --workpath "build\work" --name ai_backend main.py
 
 if %ERRORLEVEL% NEQ 0 (
     echo [Loi] PyInstaller dong goi that bai!
@@ -25,9 +25,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [3/3] Sao chep model file vao thu muc build...
 copy /Y "pose_landmarker_full.task" "build\dist\ai_backend\pose_landmarker_full.task" >nul
-if exist "pose_landmarker_heavy.task" (
-    copy /Y "pose_landmarker_heavy.task" "build\dist\ai_backend\pose_landmarker_heavy.task" >nul
-)
+del /Q "build\work" >nul 2>&1
 
 echo.
 echo ========================================================

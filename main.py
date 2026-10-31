@@ -16,6 +16,7 @@ import sys
 import websockets
 import mediapipe as mp
 from exercises_logic import ExercisesEvaluator, LandmarkPoint
+from mongodb_service import start_mongodb_bridge_thread
 
 def get_resource_path(relative_path: str) -> str:
     """Lay duong dan tuyet doi den file tai nguyen, ho tro ca chay truc tiep va khi dong goi qua PyInstaller."""
@@ -261,7 +262,14 @@ def draw_hud_banner(frame, fps: float, exercise_info: dict):
     ex_id = exercise_info.get("exercise_id", "Cho ket noi Godot...")
     state = exercise_info.get("movement_state", "READY").upper()
     fb_code = exercise_info.get("feedback_code", "POSITION_OK")
-    if ex_id == "hands_behind_head":
+    if state == "CALIBRATING":
+        calib_text = {
+            "OPEN_ARMS": "Hay dang thang 2 tay sang 2 ben ngang vai (chu T - 90 do)!",
+            "KEEP_POSITION": "Dang do bien do khop vai... Hay dang tay cao nhat co the!",
+            "CALIBRATION_COMPLETED": "Hieu chuan bien do T-Pose thanh cong!",
+        }
+        fb_text = calib_text.get(fb_code, FEEDBACK_VN_MAP.get(fb_code, fb_code))
+    elif ex_id == "hands_behind_head":
         map4_text = {
             "PREP_POSITION": "Vao the chuan bi: 2 tay om sau dau, mo rong khuyu",
             "PREP_COMPLETED": "Da vao the chuan bi! Chuan bi khep khuyu tay",
@@ -287,13 +295,18 @@ def draw_hud_banner(frame, fps: float, exercise_info: dict):
         fb_text = map3_text.get(fb_code, FEEDBACK_VN_MAP.get(fb_code, fb_code))
     elif ex_id == "cross_body_shoulder_stretch":
         map5_text = {
+            "PREP_POSITION": "Tha long 2 vai can bang de vao tu the chuan bi",
+            "PREP_COMPLETED": "Da chuan bi! Keo canh tay qua nguc va dung tay kia kep giu",
             "POSITION_OK": "Dung thang truoc camera, san sang keo cang",
-            "CONTINUE_MOVEMENT": "Keo canh tay qua ngang nguc...",
-            "TARGET_REACHED": "Dat do cang! Bat dau thien giu the 30 giay",
+            "CONTINUE_MOVEMENT": "Keo khuyu tay sat vai doi dien & dung tay kia kep giu...",
+            "CLAMP_WITH_OTHER_HAND": "Hay dung cang tay/co tay con lai kep sat khuyu tay vao nguc!",
+            "SWITCH_ARM_SIDE": "Ban da tap tay nay! Hay doi sang keo cang ben tay doi dien!",
+            "TARGET_REACHED": "Dat do cang 100%! Bat dau thien giu the 30 giay",
             "HOLD_STARTED": "Dang thien giu the keo cang 30s...",
-            "KEEP_POSITION": "Duy tri the thien keo cang...",
-            "HOLD_COMPLETED": "Hoan thanh 30 giay thien keo cang!",
+            "KEEP_POSITION": "Duy tri the thien keo cang 30s...",
+            "HOLD_COMPLETED": "Hoan thanh 30 giay thien keo cang! +100 diem thuong",
             "HOLD_INTERRUPTED": "Tu the bi gian doan! Thu lai cham rai",
+            "RETURN_TO_PREP": "Tha long 2 tay ve tu the chuan bi",
             "REP_VALID": "Tuyet voi! Da hoan thanh hiep keo cang!",
         }
         fb_text = map5_text.get(fb_code, FEEDBACK_VN_MAP.get(fb_code, fb_code))
@@ -375,8 +388,10 @@ async def process_camera():
     options = mp.tasks.vision.PoseLandmarkerOptions(
         base_options=base_options,
         running_mode=mp.tasks.vision.RunningMode.LIVE_STREAM,
+        num_poses=1,
         result_callback=update_result,
         min_pose_detection_confidence=0.6,
+        min_pose_presence_confidence=0.6,
         min_tracking_confidence=0.6,
     )
     landmarker = mp.tasks.vision.PoseLandmarker.create_from_options(options)
@@ -443,7 +458,8 @@ async def process_camera():
         active_landmarks = None
 
         if latest_result and latest_result.pose_landmarks:
-            active_landmarks = latest_result.pose_landmarks[0]
+            raw_lms = latest_result.pose_landmarks[0]
+            active_landmarks = evaluator.filter.filter(raw_lms)
             app_state["last_active_landmarks"] = active_landmarks
             app_state["last_landmarks_time"] = now
         elif (now - app_state.get("last_landmarks_time", 0.0)) < 0.25:
@@ -571,6 +587,7 @@ async def main():
     print("  KHOI DONG SERVER NHAN DIEN CU DONG CANH TAY PHCN")
     print("  Tuan thu JSON Contract 1.0.0 | Godot <-> Python/MediaPipe")
     print("=" * 60)
+    start_mongodb_bridge_thread()
     server = await websockets.serve(websocket_handler, HOST, PORT)
     print(f"[WebSocket] Server dang lang nghe tai: ws://{HOST}:{PORT}")
     try:

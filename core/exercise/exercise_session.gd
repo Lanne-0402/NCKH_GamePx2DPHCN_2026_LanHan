@@ -189,7 +189,6 @@ func _on_exercise_event_received(data: Dictionary) -> void:
 			if target_ms > 0 and not data.has("hold_progress"):
 				progress = float(elapsed_ms) / float(target_ms)
 			hold_progress_changed.emit(clampf(progress, 0.0, 1.0), elapsed_ms, target_ms)
-			feedback_changed.emit("HOLD_PROGRESS")
 		"hold_completed":
 			var target_ms := int(data.get("hold_target_ms", config.get("hold_duration_ms", 0)))
 			hold_progress_changed.emit(1.0, target_ms, target_ms)
@@ -250,6 +249,9 @@ func _complete_session() -> void:
 	var stability := int(tracker.stability) if tracker != null else 0
 	var summary := {
 		"session_id": session_id,
+		"patient_id": Global.current_patient_id,
+		"patient_name": Global.current_patient_name,
+		"rom_angle": roundf(Global.max_rom_angle * 10.0) / 10.0,
 		"map_id": _map_id,
 		"difficulty": _difficulty,
 		"started_at_utc": _started_at,

@@ -49,6 +49,7 @@ func _ready() -> void:
 	exercise_session.hold_interrupted.connect(_on_hold_interrupted)
 	exercise_session.rest_time_changed.connect(_on_rest_time_changed)
 	exercise_session.session_completed.connect(_on_session_completed)
+	PoseInput.pose_frame_received.connect(_on_pose_frame_received)
 
 	tracking_stability.grace_seconds = tracking_loss_grace_seconds
 	tracking_stability.setup(exercise_session, PoseInput)
@@ -121,7 +122,7 @@ func _on_session_feedback_changed(code: String) -> void:
 		display_code = "APPROACHING_JUMP"
 	feedback_label.text = _feedback_text(display_code)
 	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "JUMP_SUCCESS", "PREP_COMPLETED"]:
-		feedback_label.modulate = Color(0.1, 0.75, 0.2)
+		feedback_label.modulate = Color("ffd85a")
 	elif display_code in ["TRANSITION_DELAY_3", "TRANSITION_DELAY_2", "TRANSITION_DELAY_1", "PREP_POSITION", "CLOSE_ELBOWS"]:
 		feedback_label.modulate = Color(0.2, 0.8, 1.0)
 	elif display_code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "TRACKING_LOST", "BACKEND_DISCONNECTED"]:
@@ -202,7 +203,18 @@ func _on_action_window_changed(is_open: bool) -> void:
 	exercise_session.set_repetition_input_enabled(is_open)
 	_update_scrolling()
 	if is_open:
-		feedback_label.text = _feedback_text("ACTION_ZONE_READY")
+		_on_session_feedback_changed("ACTION_ZONE_READY")
+	else:
+		_on_session_feedback_changed("LEDGE_RUNNING")
+
+
+func _on_pose_frame_received(data: Dictionary) -> void:
+	if exercise_session.state != ExerciseSession.State.ACTIVE or not map4_controller.is_action_window_open():
+		return
+	var ex: Dictionary = data.get("exercise", {})
+	var fb_code: String = str(ex.get("feedback_code", ""))
+	if fb_code in ["PREP_POSITION", "PREP_COMPLETED", "CLOSE_ELBOWS", "RETURN_TO_PREP"]:
+		_on_session_feedback_changed(fb_code)
 
 
 func _show_intro() -> void:
@@ -323,7 +335,7 @@ func _feedback_text(code: String) -> String:
 		"MOVEMENT_STARTED": "Đã nhận chuyển động.",
 		"TARGET_REACHED": "Đúng tư thế. Bắt đầu giữ 5 giây.",
 		"HOLD_STARTED": "Giữ nguyên tư thế khép khuỷu tay — chuẩn bị nhảy bậc...",
-		"HOLD_PROGRESS": "Tiếp tục giữ — sắp nhảy lên bậc tiếp theo.",
+		"HOLD_PROGRESS": "Giữ nguyên tư thế khép 2 khuỷu tay (5 giây)...",
 		"HOLD_COMPLETED": "Đã giữ đủ 5 giây!",
 		"HOLD_INTERRUPTED": "Tư thế bị gián đoạn. Hãy thử lại chậm rãi.",
 		"JUMP_SUCCESS": "Tuyệt vời! Đã nhảy lên bậc tiếp theo thành công!",

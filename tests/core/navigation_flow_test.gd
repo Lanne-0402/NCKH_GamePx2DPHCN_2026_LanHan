@@ -12,7 +12,7 @@ func _run() -> void:
 	get_tree().current_scene.get_node("CanvasLayer/HistoryButton").pressed.emit()
 	await get_tree().scene_changed
 	assert(get_tree().current_scene.name == "History")
-	get_tree().current_scene.get_node("Margin/Column/Back").pressed.emit()
+	get_tree().current_scene.get_node("BackButton").pressed.emit()
 	await get_tree().scene_changed
 	get_tree().current_scene.get_node("CanvasLayer/StartButton").pressed.emit()
 	await get_tree().scene_changed

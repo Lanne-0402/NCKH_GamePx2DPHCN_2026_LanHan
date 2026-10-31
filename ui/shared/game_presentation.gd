@@ -13,6 +13,7 @@ var replay_label: Label
 var intro_guide: Control
 var status_display: RichTextLabel
 var last_status := ""
+var last_subtitle := ""
 const STATUS_COLORS := {
 	"ĐANG TẬP": "75e889", "TẠM DỪNG": "ffdc69",
 	"ĐANG NGHỈ": "80caff", "CHUẨN BỊ": "ffd28a",
@@ -23,6 +24,7 @@ const SHOW_ROM_DEBUG_WINDOW := true
 var rom_panel: PanelContainer
 var camera_bg: ColorRect
 var camera_rect: TextureRect
+var camera_tex: ImageTexture
 var camera_title: Label
 var camera_placeholder: Label
 var camera_toggle_btn: Button
@@ -60,6 +62,7 @@ func _ready() -> void:
 	level = get_parent()
 	map_id = int(level.scene_file_path.get_slice("map_",1).get_slice("/",0))
 	session = level.get_node("ExerciseSession")
+	AudioManager.attach_level.call_deferred(level, map_id)
 	ui = level.get_node("UI")
 	if map_id == 4: level.get_node("Player/FollowCamera").position.y = -20
 	# Gameplay actor now renders animated pixel steam instead of static diamonds.
@@ -74,9 +77,9 @@ func _ready() -> void:
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(bottom)
 	ui.move_child(bottom,0)
-	label("MAP %d · BUỔI TẬP" % map_id,Rect2(24,376,416,26),ui)
+	label("MAP %d · BUỔI TẬP" % map_id,Rect2(24,378,250,26),ui)
 	# Preserve the controller's Label as the source of truth, render only value in color.
-	place(level.state_label,Rect2(24,408,416,26))
+	place(level.state_label,Rect2(290,378,294,26))
 	level.state_label.hide()
 	status_display = RichTextLabel.new()
 	status_display.name = "ColoredStatus"
@@ -87,15 +90,15 @@ func _ready() -> void:
 	status_display.add_theme_font_size_override("normal_font_size",16)
 	status_display.add_theme_color_override("default_color",Color("f3f2de"))
 	ui.add_child(status_display)
-	place(status_display,Rect2(24,408,416,28))
+	place(status_display,Rect2(290,380,294,28))
 	_sync_status()
-	place(level.phase_label,Rect2(24,442,190,26))
-	place(level.rep_label,Rect2(220,442,220,26))
+	place(level.phase_label,Rect2(24,441,230,26))
+	place(level.rep_label,Rect2(290,441,250,26))
 	place(level.feedback_label,Rect2(328,24,558,95))
 	level.feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	level.feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	level.feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	level.feedback_label.add_theme_font_size_override("font_size",20)
+	level.feedback_label.add_theme_font_size_override("font_size",28)
 	level.hearts_label.visible = TrackingStability.ENABLED
 	place(level.hearts_label,Rect2(940,24,200,32))
 	level.hearts_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -103,21 +106,21 @@ func _ready() -> void:
 	level.hearts_label.add_theme_color_override("font_color",Color("ff7171"))
 	for name in ["RockProgressLabel","LiftProgressLabel","PushProgressLabel","ClimbProgressLabel","StretchProgressLabel"]:
 		var node := ui.get_node_or_null(name)
-		if node != null: place(node,Rect2(24,474,416,26))
+		if node != null: place(node,Rect2(24,474,510,26))
 	for name in ["DirectionLabel","SideLabel"]:
 		var node := ui.get_node_or_null(name)
-		if node != null: place(node,Rect2(24,506,416,26))
+		if node != null: place(node,Rect2(24,505,510,26))
 	var bonus := ui.get_node_or_null("BonusLabel")
-	if bonus != null: place(bonus,Rect2(220,506,220,26))
+	if bonus != null: place(bonus,Rect2(284,505,260,26))
 	var hold := ui.get_node_or_null("HoldPanel")
 	if hold != null:
-		place(hold,Rect2(24,538,416,44))
+		place(hold,Rect2(24,539,516,44))
 		hold.get_node("Backing").hide()
-		place(hold.get_node("HoldLabel"),Rect2(0,0,416,24))
-		place(hold.get_node("HoldBar"),Rect2(0,28,416,12))
+		place(hold.get_node("HoldLabel"),Rect2(0,0,516,24))
+		place(hold.get_node("HoldBar"),Rect2(0,28,516,12))
 	place(level.rest_label,Rect2(280,122,592,86))
 	level.rest_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button("Xem hướng dẫn [U]",Rect2(24,592,200,42),_review)
+	button("Xem hướng dẫn [U]",Rect2(24,596,516,44),_review)
 
 	camera_bg = ColorRect.new()
 	camera_bg.color = Color("172b24")
@@ -128,10 +131,11 @@ func _ready() -> void:
 	camera_rect.name = "CameraStreamRect"
 	camera_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	camera_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	camera_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	camera_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(camera_rect)
 
-	camera_title = label("CAMERA (LIVE) [C]", Rect2(0, 0, 100, 22), ui)
+	camera_title = label("CAMERA NGƯỜI TẬP [C]", Rect2(0, 0, 100, 22), ui)
 	camera_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	camera_title.add_theme_color_override("font_color", Color("00e676"))
 
@@ -141,15 +145,21 @@ func _ready() -> void:
 	camera_toggle_btn.pressed.connect(_toggle_camera_focus)
 	ui.add_child(camera_toggle_btn)
 
-	camera_placeholder = label("Chưa kết nối camera\n\nKhung camera rộng trực quan\ntheo dõi tư thế tập luyện.", Rect2(0, 0, 100, 60), ui)
+	camera_placeholder = label("Chưa kết nối camera\n\nKhung camera trực quan\ntheo dõi tư thế tập luyện.", Rect2(0, 0, 100, 60), ui)
 	camera_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	PoseInput.camera_frame_received.connect(func(img: Image):
-		if is_instance_valid(camera_rect):
-			camera_rect.texture = ImageTexture.create_from_image(img)
+	if PoseInput.has_signal("camera_frame_received"):
+		PoseInput.connect("camera_frame_received", func(img: Image):
+			if img == null or img.is_empty() or not is_instance_valid(camera_rect):
+				return
+			if camera_tex != null and camera_tex.get_width() == img.get_width() and camera_tex.get_height() == img.get_height() and camera_tex.get_format() == img.get_format():
+				camera_tex.update(img)
+			else:
+				camera_tex = ImageTexture.create_from_image(img)
+			camera_rect.texture = camera_tex
 			if is_instance_valid(camera_placeholder) and camera_placeholder.visible:
 				camera_placeholder.hide()
-	)
+		)
 
 	PoseInput.connection_changed.connect(func(connected: bool, _details):
 		if not connected and is_instance_valid(camera_placeholder):
@@ -160,6 +170,8 @@ func _ready() -> void:
 	_build_rom_debug_window()
 	_update_camera_layout()
 	_build_intro()
+	var results := preload("res://ui/shared/session_results.gd").new()
+	level.add_child.call_deferred(results)
 	# Ensure overlays stay above newly added HUD controls.
 	for name in ["InstructionPanel","ResultPanel","CountdownLabel","RestLabel"]:
 		ui.move_child(ui.get_node(name),-1)
@@ -198,7 +210,7 @@ func _build_intro() -> void:
 
 func _hold(progress: float, _elapsed: int, _target: int) -> void:
 	var actor = level.get_node("Player").mk2
-	actor.amount = clampf(progress*4,0,1)
+	actor.amount = clampf(progress,0,1)
 	actor.refresh()
 
 func _reset_actor() -> void:
@@ -220,6 +232,8 @@ func _review() -> void:
 	session.set_menu_paused(true)
 	get_tree().paused = true
 	replay = Control.new()
+	# Keep replay controls interactive while the gameplay tree is paused.
+	replay.process_mode = Node.PROCESS_MODE_ALWAYS
 	replay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui.add_child(replay)
 	var shade := ColorRect.new()
@@ -238,12 +252,39 @@ func _review() -> void:
 	close.text = "TIẾP TỤC CHƠI"
 	close.pressed.connect(_resume)
 	replay.add_child(close)
+	close.grab_focus()
+	close.focus_next = NodePath(".")
+	close.focus_previous = NodePath(".")
 	replay_label = label("",Rect2(400,594,350,36),replay)
 
 func _resume() -> void:
 	if resuming >= 0: return
 	replay_guide.complete = true
 	resuming = 3
+
+func _sync_subtitle() -> void:
+	var caption: Label = level.feedback_label
+	if caption.text == last_subtitle: return
+	var raw := caption.text.replace("\n", " ").strip_edges()
+	var font := caption.get_theme_font("font")
+	var font_size := caption.get_theme_font_size("font_size")
+	var width := caption.size.x - 8.0
+	last_subtitle = raw
+	if font.get_string_size(raw, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width:
+		var words := raw.split(" ", false)
+		var best_score := INF
+		for split in range(2, words.size() - 1):
+			var left := " ".join(words.slice(0, split))
+			var right := " ".join(words.slice(split))
+			var a := font.get_string_size(left, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+			var b := font.get_string_size(right, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+			if a > width or b > width: continue
+			var score := absf(a - b)
+			if left.ends_with(".") or left.ends_with("!") or left.ends_with("—"): score -= width * 0.3
+			if score < best_score:
+				best_score = score
+				last_subtitle = left + "\n" + right
+	caption.text = last_subtitle
 
 func _sync_status() -> void:
 	var value: String = level.state_label.text.trim_prefix("TRẠNG THÁI:").strip_edges()
@@ -253,6 +294,7 @@ func _sync_status() -> void:
 	status_display.text = "TRẠNG THÁI: [color=#%s]%s[/color]" % [STATUS_COLORS.get(value,"c7d8ef"),value]
 
 func _process(delta: float) -> void:
+	_sync_subtitle()
 	_sync_status()
 	if not is_instance_valid(replay): return
 	if level.get_node("SettingsMenu").overlay.visible: return
@@ -269,10 +311,15 @@ func _process(delta: float) -> void:
 			session.set_menu_paused(false)
 			owns_pause = false
 			ui.get_node("SettingsButton").disabled = false
+			ui.get_node("SettingsButton").grab_focus()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if is_instance_valid(replay) and event.is_action_pressed("ui_cancel") and not event.is_echo():
+		_resume()
+		get_viewport().set_input_as_handled()
+		return
 	if not event is InputEventKey or not event.pressed or event.echo: return
-	if event.keycode == KEY_C:
+	if event.keycode == KEY_C and not get_tree().paused:
 		_toggle_camera_focus()
 		return
 	if event.keycode == KEY_F3:
@@ -290,8 +337,8 @@ func _exit_tree() -> void:
 func _build_rom_debug_window() -> void:
 	rom_panel = PanelContainer.new()
 	rom_panel.name = "RomDebugWindow"
-	rom_panel.position = Vector2(456, 372)
-	rom_panel.size = Vector2(226, 266)
+	rom_panel.position = Vector2(556, 372)
+	rom_panel.size = Vector2(216, 266)
 	rom_panel.visible = SHOW_ROM_DEBUG_WINDOW
 	ui.add_child(rom_panel)
 
@@ -313,7 +360,6 @@ func _build_rom_debug_window() -> void:
 	vbox.add_theme_constant_override("separation", 5)
 	margin.add_child(vbox)
 
-	# 1. Header co nut Close
 	var header_box := HBoxContainer.new()
 	vbox.add_child(header_box)
 
@@ -334,14 +380,12 @@ func _build_rom_debug_window() -> void:
 	)
 	header_box.add_child(close_btn)
 
-	# 2. Trang thai
 	var rom_state_label := Label.new()
 	rom_state_label.text = "Trạng thái: CHUẨN BỊ"
 	rom_state_label.add_theme_color_override("font_color", Color("ffd28a"))
 	rom_state_label.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(rom_state_label)
 
-	# 3. Tien do ROM
 	var rom_value_label := Label.new()
 	rom_value_label.text = "Biên độ ROM: 0%"
 	rom_value_label.add_theme_color_override("font_color", Color("f3f2de"))
@@ -355,9 +399,8 @@ func _build_rom_debug_window() -> void:
 	rom_bar.show_percentage = true
 	vbox.add_child(rom_bar)
 
-	# 4. Thoi gian giu the
 	var hold_title_label := Label.new()
-	var def_target: float = 30.0 if map_id == 5 else 5.0
+	var def_target: float = 30.0 if map_id == 5 else (0.7 if map_id == 1 else 5.0)
 	hold_title_label.text = "Giữ thế: 0.0s / %.1fs" % def_target
 	hold_title_label.add_theme_color_override("font_color", Color("80caff"))
 	hold_title_label.add_theme_font_size_override("font_size", 13)
@@ -369,11 +412,7 @@ func _build_rom_debug_window() -> void:
 	hold_bar.value = 0.0
 	hold_bar.show_percentage = false
 	vbox.add_child(hold_bar)
-	if map_id == 1:
-		hold_title_label.hide()
-		hold_bar.hide()
 
-	# 5. Phan hoi tu the (Feedback)
 	var rom_fb_label := Label.new()
 	rom_fb_label.text = ">> Sẵn sàng bắt đầu"
 	rom_fb_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -381,7 +420,6 @@ func _build_rom_debug_window() -> void:
 	rom_fb_label.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(rom_fb_label)
 
-	# 6. Huong dan phim tat
 	var hint_lbl := Label.new()
 	hint_lbl.text = "[F3]: Ẩn/Hiện debug"
 	hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -389,7 +427,6 @@ func _build_rom_debug_window() -> void:
 	hint_lbl.add_theme_font_size_override("font_size", 11)
 	vbox.add_child(hint_lbl)
 
-	# Ket noi signals cap nhat thoi gian thuc
 	PoseInput.pose_frame_received.connect(func(data: Dictionary):
 		if not is_instance_valid(rom_panel) or not rom_panel.visible:
 			return
@@ -403,15 +440,12 @@ func _build_rom_debug_window() -> void:
 		rom_bar.value = rom_prog * 100.0
 		rom_state_label.text = "Trạng thái: %s" % movement_state
 
+		var target_sec: float = 30.0 if map_id == 5 else (0.7 if map_id == 1 else 5.0)
 		if hold_prog > 0.0:
-			var target_sec: float = 30.0 if map_id == 5 else 5.0
 			var cur_sec: float = hold_prog * target_sec
 			hold_title_label.text = "Giữ thế: %.1fs / %.1fs (%d%%)" % [cur_sec, target_sec, roundi(hold_prog * 100.0)]
 			hold_bar.value = hold_prog * 100.0
-			hold_title_label.show()
-			hold_bar.show()
-		elif map_id != 1:
-			var target_sec: float = 30.0 if map_id == 5 else 5.0
+		else:
 			hold_title_label.text = "Giữ thế: 0.0s / %.1fs" % target_sec
 			hold_bar.value = 0.0
 
@@ -431,7 +465,6 @@ func _update_camera_layout() -> void:
 		return
 
 	if is_camera_focused:
-		# Che do Toan canh Focus (640 x 480 giong man hinh hieu chinh)
 		var cam_rect_pos := Vector2(256, 84)
 		var cam_rect_size := Vector2(640, 480)
 		camera_bg.position = cam_rect_pos
@@ -455,10 +488,9 @@ func _update_camera_layout() -> void:
 		if is_instance_valid(camera_placeholder):
 			ui.move_child(camera_placeholder, -1)
 	else:
-		# Che do binh thuong trong thanh HUD day
 		var show_debug: bool = is_instance_valid(rom_panel) and rom_panel.visible
-		var cam_x: float = 690.0 if show_debug else 456.0
-		var cam_w: float = 444.0 if show_debug else 678.0
+		var cam_x: float = 780.0 if show_debug else 608.0
+		var cam_w: float = 356.0 if show_debug else 480.0
 		var cam_pos := Vector2(cam_x, 372)
 		var cam_size := Vector2(cam_w, 266)
 
@@ -469,12 +501,12 @@ func _update_camera_layout() -> void:
 		camera_rect.size = cam_size
 		camera_title.position = Vector2(cam_pos.x + 12, cam_pos.y + 6)
 		camera_title.size = Vector2(cam_size.x - 130, 22)
-		camera_title.text = "CAMERA (LIVE) [C]"
+		camera_title.text = "CAMERA NGƯỜI TẬP [C]"
 		camera_toggle_btn.position = Vector2(cam_pos.x + cam_size.x - 116, cam_pos.y + 6)
 		camera_toggle_btn.size = Vector2(106, 24)
 		camera_toggle_btn.text = "⛶ Toàn cảnh"
-		camera_placeholder.position = Vector2(cam_pos.x + 20, cam_pos.y + 100)
-		camera_placeholder.size = Vector2(cam_size.x - 40, 70)
+		camera_placeholder.position = Vector2(cam_pos.x + 16, cam_pos.y + 92)
+		camera_placeholder.size = Vector2(cam_size.x - 32, 90)
 
 
 func _toggle_camera_focus() -> void:
@@ -486,19 +518,18 @@ func _vn_fb(code: String) -> String:
 		"POSITION_OK": "Vị trí phù hợp, sẵn sàng",
 		"PREP_POSITION": "Vào thế chuẩn bị",
 		"PREP_COMPLETED": "Đã chuẩn bị xong, bắt đầu cử động",
-		"TRANSITION_DELAY_3": "Chuyển thế: 3 giây...",
-		"TRANSITION_DELAY_2": "Chuyển thế: 2 giây...",
-		"TRANSITION_DELAY_1": "Chuyển thế: 1 giây...",
 		"CLOSE_ELBOWS": "Khép 2 khuỷu tay về trước mặt",
 		"OPEN_ARMS": "Dang rộng 2 tay sang 2 bên",
 		"REACH_OVERHEAD": "Vươn 2 tay lên cao trên đầu",
-		"CONTINUE_MOVEMENT": "Kéo căng cánh tay qua ngực...",
-		"TARGET_REACHED": "Đạt độ căng tối đa!",
+		"CONTINUE_MOVEMENT": "Tiếp tục cử động đến ngưỡng đích...",
+		"TARGET_REACHED": "Đạt ngưỡng mục tiêu!",
 		"HOLD_STARTED": "Đang giữ thế cử động...",
 		"KEEP_POSITION": "Duy trì giữ nguyên tư thế",
 		"HOLD_COMPLETED": "Hoàn thành thời gian giữ thế!",
 		"HOLD_INTERRUPTED": "Tư thế bị gián đoạn! Hãy thử lại",
 		"RETURN_TO_PREP": "Đưa tay về tư thế ban đầu",
+		"RELEASE_POSITION": "Đưa tay về trước (ROM < 40%) để chuẩn bị",
+		"READY_FOR_NEXT_REP": "Sẵn sàng! Hãy ép hai bả vai ra sau",
 		"REP_VALID": "Động tác hợp lệ! Rất tốt",
 		"LIFT_SUCCESS": "Đã đẩy tảng đá thành công!",
 		"PUSH_SUCCESS": "Đã đẩy lùi 2 bức tường!",

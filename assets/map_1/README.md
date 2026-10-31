@@ -1,9 +1,10 @@
 # Map 1 curated assets
 
 Map 1 uses one primary visual family: **Legacy Fantasy - High Forest 2.3**.
-The UI frames come from **Kenney Pixel UI Pack (CC0)**.
+Current UI uses the original code-native rustic SVG theme in `assets/shared/ui/rustic/`.
+The previous Kenney UI has been archived; its license remains available under `assets/shared/ui/`.
 
-## Ready and in use
+## Historical curated image inventory (not an exhaustive runtime dependency list)
 
 | File | Purpose | Original source |
 | --- | --- | --- |
@@ -14,7 +15,7 @@ The UI frames come from **Kenney Pixel UI Pack (CC0)**.
 | `environment/ground_rock_tile.png` | Ground fill tile | `Legacy-Fantasy - High Forest 2.3/Assets/Tiles.png` |
 | `obstacles/rock_base.png` | Map 1 obstacle | `Legacy-Fantasy - High Forest 2.3/Assets/Props-Rocks.png` |
 | `goal/cave_entrance.png` | End-of-map cave entrance | `Legacy-Fantasy - High Forest 2.3/Assets/Tree-Assets.png` |
-| `ui/*.png`, `ui/map1_theme.tres` | Instruction/result panel and button frames | `kenney_pixel-ui-pack/9-Slice/Ancient` |
+
 
 The exported images are cropped copies. Keep the original packs unchanged when
 creating further variants.
@@ -23,19 +24,13 @@ creating further variants.
 > but no separate license file for the High Forest pack. Verify and archive its
 > original itch.io license before distributing a public or commercial build.
 
-## Waiting for replacement assets
+## Current implementation — 2026-10-16
 
-- `characters/`: front-readable rehabilitation character with `idle`, `run`,
-  `exercise`, `tracking_lost`, and `finish` animations.
-- `pose_guide/`: start/end illustration for scapular retraction, with both
-  elbows visibly bent at 90 degrees.
-- `effects/`: dedicated rock crack and break animation.
-- `audio/`: ambient forest loop, approach cue, correct-repetition cue, rock
-  break sound, rest cue, and completion cue.
-
-Until those assets are available, Map 1 keeps its existing functional
-placeholder behavior. Do not substitute sword attacks for the rehabilitation
-movement because that would communicate the wrong pose to the player.
+- Shared MK2 gameplay actor and two-view joint guides are integrated.
+- Rock-break effects are implemented in code.
+- Placeholder music and SFX are integrated from `assets/audio_placeholder/`.
+- Original source/extraction tools are archived outside the project.
+- See the root README for backend gaps, audio limitations and remaining work.
 
 ## Import rules
 

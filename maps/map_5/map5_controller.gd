@@ -8,7 +8,7 @@ signal hold_visual_progress_changed(progress: float)
 signal side_changed(side_label: String)
 
 const SIDE_LABELS: Array[String] = ["TAY TRÁI", "TAY PHẢI"]
-const BONUS_PER_STRETCH := 50
+const BONUS_PER_STRETCH := 100
 const MAX_BONUS := 100
 
 var total_stretches := 2

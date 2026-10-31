@@ -1,152 +1,252 @@
-[gd_scene format=3 uid="uid://bnbcr4vedbawh"]
-
-[ext_resource type="Script" uid="uid://bhisriemq3x4x" path="res://ui/screens/calibration/calibration_screen.gd" id="1_7kyun"]
-
-[node name="CalibrationScreen" type="Control" unique_id=1859790811]
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Script" path="res://ui/screens/calibration/calibration_screen.gd" id="1"]
+[ext_resource type="Script" path="res://ui/screens/calibration/camera_placeholder.gd" id="2"]
+[node name="CalibrationScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_7kyun")
+script = ExtResource("1")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=681766131]
+[node name="ColorRect" type="Control" parent="."]
 layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
 offset_right = 1152.0
 offset_bottom = 648.0
-color = Color(0.92, 0.89, 0.78, 1)
 mouse_filter = 2
 
-[node name="BackButton" type="Button" parent="ColorRect" unique_id=948372501]
+[node name="BackButton" type="Button" parent="ColorRect"]
 layout_mode = 0
-offset_left = 85.0
-offset_top = 50.0
-offset_right = 189.0
-offset_bottom = 86.0
-theme_override_font_sizes/font_size = 20
-text = "< Quay lại"
+offset_left = 32.0
+offset_top = 32.0
+offset_right = 176.0
+offset_bottom = 80.0
+text = "‹ Quay lại"
 
-[node name="Label" type="Label" parent="." unique_id=315951870]
+[node name="Title" type="Label" parent="."]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 22.0
-offset_right = 896.0
-offset_bottom = 67.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_left = 240.0
+offset_top = 28.0
+offset_right = 912.0
+offset_bottom = 72.0
+text = "CHUẨN BỊ TẬP LUYỆN"
+autowrap_mode = 2
 theme_override_font_sizes/font_size = 30
-text = "Khung hiển thị Camera AI"
+theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
 horizontal_alignment = 1
 
-[node name="ColorRect2" type="ColorRect" parent="." unique_id=457090437]
+[node name="Subtitle" type="Label" parent="."]
 layout_mode = 0
-offset_left = 256.0
-offset_top = 84.0
-offset_right = 896.0
-offset_bottom = 564.0
-color = Color(0.1, 0.14, 0.12, 1)
+offset_left = 240.0
+offset_top = 79.0
+offset_right = 912.0
+offset_bottom = 107.0
+text = "01  Chuẩn bị     /     02  Chọn bài tập     /     03  Bắt đầu"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
+horizontal_alignment = 1
 
-[node name="Introduce" type="Label" parent="." unique_id=2105289120]
+[node name="ColorRect2" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 276.0
-offset_top = 130.0
-offset_right = 876.0
-offset_bottom = 185.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_left = 32.0
+offset_top = 128.0
+offset_right = 672.0
+offset_bottom = 488.0
+script = ExtResource("2")
+mouse_filter = 2
+
+[node name="CameraTitle" type="Label" parent="."]
+layout_mode = 0
+offset_left = 52.0
+offset_top = 145.0
+offset_right = 392.0
+offset_bottom = 173.0
+text = "KHUNG CAMERA"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
+
+[node name="CameraHint" type="Label" parent="."]
+layout_mode = 0
+offset_left = 76.0
+offset_top = 389.0
+offset_right = 628.0
+offset_bottom = 462.0
+text = "Chưa có hình ảnh camera\nĐứng giữa khung hình, để thấy rõ thân trên và hai tay."
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
+horizontal_alignment = 1
+
+[node name="InstructionCard" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 696.0
+offset_top = 128.0
+offset_right = 1120.0
+offset_bottom = 608.0
+mouse_filter = 2
+
+[node name="Label2" type="Label" parent="."]
+layout_mode = 0
+offset_left = 720.0
+offset_top = 148.0
+offset_right = 1096.0
+offset_bottom = 182.0
+text = "HIỆU CHỈNH · DANG 2 TAY NGANG VAI"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
+
+[node name="Steps" type="Label" parent="."]
+layout_mode = 0
+offset_left = 720.0
+offset_top = 190.0
+offset_right = 1096.0
+offset_bottom = 282.0
+text = "Động tác: dang thẳng 2 tay sang 2 bên ngang vai (90°).\nĐể thấy rõ vai, khuỷu và hai tay.\nNhấn đo để thu mẫu trong 5 giây."
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
+
+[node name="Introduce" type="Label" parent="."]
+layout_mode = 0
+offset_left = 720.0
+offset_top = 310.0
+offset_right = 1096.0
+offset_bottom = 378.0
+text = "Sẵn sàng khi hệ thống nhận diện đủ cơ thể."
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
+
+[node name="RomLabel" type="Label" parent="."]
+offset_left = 720.0
+offset_top = 280.0
+offset_right = 1096.0
+offset_bottom = 306.0
 theme_override_font_sizes/font_size = 17
-text = "Hãy lùi lại để camera thấy 3/4 cơ thể bạn. 
-Khi đã sẵn sàng, hãy thực hiện động tác tối đa và giữ trong 5 giây."
-horizontal_alignment = 1
+text = "Chỉ số hiện tại: —"
+autowrap_mode = 2
 
-[node name="Label2" type="Label" parent="." unique_id=475596303]
-layout_mode = 0
-offset_left = 276.0
-offset_top = 94.0
-offset_right = 876.0
-offset_bottom = 128.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 28
-text = "BƯỚC ĐỆM: HIỆU CHỈNH BIÊN ĐỘ"
-horizontal_alignment = 1
+[node name="ProgressCaption" type="Label" parent="."]
+offset_left = 720.0
+offset_top = 382.0
+offset_right = 1096.0
+offset_bottom = 404.0
+theme_override_font_sizes/font_size = 16
+text = "Thời gian thu mẫu: 0.0 / 5.0 giây"
 
-[node name="ProgressBar" type="ProgressBar" parent="." unique_id=48994321]
+[node name="ProgressBar" type="ProgressBar" parent="."]
 layout_mode = 0
-offset_left = 376.0
-offset_top = 464.0
-offset_right = 776.0
-offset_bottom = 492.0
+offset_left = 720.0
+offset_top = 404.0
+offset_right = 1096.0
+offset_bottom = 428.0
 max_value = 100.0
 show_percentage = true
 
-[node name="StartCalibButton" type="Button" parent="." unique_id=715200943]
+[node name="StartCalibButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 416.0
-offset_top = 506.0
-offset_right = 566.0
-offset_bottom = 546.0
+offset_left = 720.0
+offset_top = 446.0
+offset_right = 1096.0
+offset_bottom = 500.0
 text = "BẮT ĐẦU ĐO"
 
-[node name="NextButton" type="Button" parent="." unique_id=972049777]
+[node name="NextButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 586.0
-offset_top = 506.0
-offset_right = 736.0
-offset_bottom = 546.0
+offset_left = 720.0
+offset_top = 516.0
+offset_right = 1096.0
+offset_bottom = 570.0
+text = "TIẾP TỤC · CHỌN MAP"
 disabled = true
-text = "VÀO GAME"
 
 [node name="PoseStatusPanel" type="PanelContainer" parent="."]
-visible = false
 layout_mode = 0
-offset_left = 905.0
-offset_top = 91.0
-offset_right = 1140.0
-offset_bottom = 302.0
+offset_left = 32.0
+offset_top = 504.0
+offset_right = 672.0
+offset_bottom = 608.0
+
 
 [node name="MarginContainer" type="MarginContainer" parent="PoseStatusPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
-
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_right = 0
 [node name="VBoxContainer" type="VBoxContainer" parent="PoseStatusPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 7
+theme_override_constants/separation = 2
 
 [node name="Title" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "TRẠNG THÁI"
+autowrap_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "POSE DEBUG"
+visible = false
 
 [node name="ConnectionLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Backend: Đang kiểm tra..."
+text = "Đang kiểm tra kết nối…"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+visible = true
 
 [node name="TrackingLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Tracking: Đang kiểm tra..."
+text = "Chờ dữ liệu nhận diện"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+visible = true
 
 [node name="ConfidenceLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Độ tin cậy: 0%"
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+visible = false
 
 [node name="FeedbackLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Phản hồi: Chờ dữ liệu"
+text = ""
 autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+visible = false
 
 [node name="HelpLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.25, 0.25, 0.25, 1)
-theme_override_font_sizes/font_size = 12
-text = "T: tracking  |  K: kết nối\nC: đo  |  R/F: rep đúng/sai"
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+visible = false
+
+[node name="DebugToggle" type="Button" parent="."]
+layout_mode = 0
+offset_left = 460.0
+offset_top = 145.0
+offset_right = 652.0
+offset_bottom = 179.0
+text = "Thông tin kỹ thuật"
+theme_override_font_sizes/font_size = 16
+
+[node name="DebugPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 206.0
+offset_right = 640.0
+offset_bottom = 376.0
+visible = false
+
+[node name="Text" type="Label" parent="DebugPanel"]
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
 
 [connection signal="pressed" from="ColorRect/BackButton" to="." method="_on_back_button_pressed"]
+
 [connection signal="pressed" from="StartCalibButton" to="." method="_on_start_calib_button_pressed"]
+
 [connection signal="pressed" from="NextButton" to="." method="_on_next_button_pressed"]

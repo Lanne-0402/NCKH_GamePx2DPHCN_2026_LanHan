@@ -40,7 +40,7 @@ func _ready() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	text("MAP %d · %s" % [map_id,TITLES[map_id-1]],Rect2(16,10,808,34),24)
-	text(NOTES[map_id-1],Rect2(16,48,808,48),17)
+	text(NOTES[map_id-1],Rect2(16,48,808,48),18)
 	actor = Actor.new()
 	actor.map_id = map_id
 	actor.pose_id = [3,0,4,1,2][map_id-1]
@@ -65,7 +65,7 @@ func _ready() -> void:
 	side_label = text("GÓC NGANG · MẶT HƯỚNG →",Rect2(440,96,360,26),16)
 	caption = text("",Rect2(20,384,800,45),20)
 	timer_label = text("",Rect2(20,435,800,26),16)
-	text("Khớp phải: vàng · trái: xanh (nét đứt) · Minh họa cần duyệt chuyên môn.",Rect2(16,463,808,22),14)
+	text("Khớp phải: vàng · trái: xanh (nét đứt) · Minh họa cần duyệt chuyên môn.",Rect2(16,463,808,22),16)
 	_update()
 
 func _process(delta: float) -> void:

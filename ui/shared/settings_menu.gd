@@ -27,6 +27,7 @@ func _ready() -> void:
 	$Overlay/Center/Panel/Margin/Contents/Home.pressed.connect(_request_navigation.bind(HOME_SCENE))
 	$Overlay/Center/Panel/Margin/Contents/MapSelection.pressed.connect(_request_navigation.bind(MAP_SELECTION_SCENE))
 	$Overlay/Center/Panel/Margin/Contents/Camera.pressed.connect(_request_navigation.bind(CAMERA_SCENE))
+	_style_confirmation()
 	confirm.confirmed.connect(_navigate)
 	confirm.canceled.connect(resume.grab_focus)
 	if get_parent().get_node_or_null("ExerciseSession") == null:
@@ -34,6 +35,42 @@ func _ready() -> void:
 		$Overlay/Center/Panel/Margin/Contents/Hint.text = "Thiết lập chung của trò chơi"
 		$Overlay/Center/Panel/Margin/Contents/Home.hide()
 	overlay.hide()
+
+
+func _style_confirmation() -> void:
+	# A second scrim separates the confirmation from the Settings panel.
+	var dim := ColorRect.new()
+	dim.name = "ConfirmationDim"
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.015, 0.025, 0.02, 0.74)
+	dim.visible = false
+	overlay.add_child(dim)
+	confirm.visibility_changed.connect(func(): dim.visible = confirm.visible)
+	confirm.borderless = true
+	confirm.unresizable = true
+	confirm.size = Vector2i(520, 270)
+	confirm.min_size = Vector2i(520, 270)
+	var frame := preload("res://assets/shared/ui/game_theme.tres").get_stylebox("panel", "PanelContainer").duplicate()
+	frame.content_margin_left = 28
+	frame.content_margin_right = 28
+	frame.content_margin_top = 26
+	frame.content_margin_bottom = 22
+	confirm.add_theme_stylebox_override("panel", frame)
+	var message := confirm.get_label()
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	message.add_theme_color_override("font_color", Color("352716"))
+	message.add_theme_font_size_override("font_size", 22)
+	for action in [confirm.get_ok_button(), confirm.get_cancel_button()]:
+		action.custom_minimum_size = Vector2(180, 48)
+	confirm.ok_button_text = "RỜI MÀN CHƠI"
+	confirm.cancel_button_text = "Ở LẠI"
+	confirm.about_to_popup.connect(_focus_stay.call_deferred)
+
+
+func _focus_stay() -> void:
+	if is_inside_tree() and confirm.visible:
+		confirm.get_cancel_button().grab_focus()
 
 
 func open_menu() -> void:
@@ -89,7 +126,7 @@ func _request_navigation(scene_path: String) -> void:
 	if get_parent().get_node_or_null("ExerciseSession") == null:
 		_navigate()
 		return
-	confirm.dialog_text = "Rời màn chơi sẽ kết thúc lượt tập hiện tại.\nBạn có muốn tiếp tục?"
+	confirm.dialog_text = "RỜI MÀN CHƠI?\n\nLượt tập hiện tại sẽ kết thúc.\nBạn có muốn rời màn chơi?"
 	confirm.popup_centered()
 
 

@@ -31,9 +31,40 @@ func _run() -> void:
 			if level.exercise_session.state == ExerciseSession.State.ACTIVE: break
 			await get_tree().process_frame
 		assert(level.exercise_session.state == ExerciseSession.State.ACTIVE, "Map %d failed auto-start: state %d" % [id, level.exercise_session.state])
+		var guide_buttons := 0
+		for control in level.get_node("UI").get_children():
+			if control is Button:
+				assert(not control.text.begins_with("Ẩn/hiện khớp"))
+				if control.text == "Xem hướng dẫn [U]":
+					guide_buttons += 1
+					assert(control.position == Vector2(24,596) and control.size.x == 516)
+		assert(guide_buttons == 1)
 		var reps: int = level.exercise_session.total_valid_reps
 		p._review()
 		assert(get_tree().paused and p.owns_pause)
+		# Real GUI input, not pressed.emit(): catches paused buttons ignoring clicks.
+		await get_tree().process_frame
+		var skip: Button
+		for control in p.replay.get_children():
+			if control is Button: skip = control
+		assert(skip != null and not skip.disabled and skip.can_process())
+		assert(p.replay_guide.seconds < 15.0)
+		var click_position := skip.get_global_rect().get_center()
+		var move := InputEventMouseMotion.new()
+		move.position = click_position
+		get_viewport().push_input(move, true)
+		for down in [true, false]:
+			var click := InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_LEFT
+			click.position = click_position
+			click.pressed = down
+			get_viewport().push_input(click, true)
+		assert(p.resuming >= 0, "Skip click must work while paused")
+		p._process(3.1)
+		assert(not get_tree().paused and level.exercise_session.total_valid_reps == reps)
+		await get_tree().process_frame
+		# Reopening without clicking must still finish automatically at 15 seconds.
+		p._review()
 		p.replay_guide.seconds = 14.99
 		p._process(0.02)
 		assert(p.resuming >= 0)

@@ -84,7 +84,7 @@ func _build_previews() -> void:
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		caption.add_theme_font_size_override("font_size",16)
+		caption.add_theme_font_size_override("font_size",18)
 		caption.add_theme_color_override("font_color",Color("f5edcf"))
 		card.add_child(caption)
 		var subtitle: Label = caption.duplicate()

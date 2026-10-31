@@ -117,8 +117,11 @@ func _on_pose_frame_received(data: Dictionary) -> void:
 	if Global.selected_action == 1:
 		var ex: Dictionary = data.get("exercise", {})
 		var rom: float = float(ex.get("rom_progress", 1.0))
-		if rom < 0.40:
-			_map1_rom_dropped_below_40 = true
+		var m_state: String = str(ex.get("movement_state", ""))
+		var fb_code: String = str(ex.get("feedback_code", ""))
+		if rom < 0.40 or m_state in ["ready", "contracting", "holding"]:
+			if fb_code != "RELEASE_POSITION":
+				_map1_rom_dropped_below_40 = true
 
 
 func _on_session_feedback_changed(code: String) -> void:
@@ -131,10 +134,10 @@ func _on_session_feedback_changed(code: String) -> void:
 	feedback_label.text = _feedback_text(display_code)
 	match display_code:
 		"REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "READY_FOR_NEXT_REP", "TARGET_REACHED", "HOLD_COMPLETED":
-			feedback_label.modulate = Color(0.1, 0.75, 0.2)
+			feedback_label.modulate = Color("ffd85a")
 		"RELEASE_POSITION", "ROCK_APPROACHING", "CONTINUE_MOVEMENT", "MOVEMENT_STARTED", "HOLD_STARTED", "KEEP_POSITION":
 			feedback_label.modulate = Color(0.2, 0.8, 1.0)
-		"MOVEMENT_TOO_FAST", "REP_REJECTED", "TRACKING_LOST", "BACKEND_DISCONNECTED":
+		"MOVEMENT_TOO_FAST", "REP_REJECTED", "TRACKING_LOST", "BACKEND_DISCONNECTED", "HOLD_INTERRUPTED":
 			feedback_label.modulate = Color(0.9, 0.2, 0.1)
 		_:
 			feedback_label.modulate = Color.WHITE
@@ -142,13 +145,9 @@ func _on_session_feedback_changed(code: String) -> void:
 
 func _on_repetition_accepted(data: Dictionary) -> void:
 	if Global.selected_action == 1:
-		if not _map1_rom_dropped_below_40:
-			feedback_label.modulate = Color(0.9, 0.2, 0.1)
-			feedback_label.text = _feedback_text("RELEASE_POSITION")
-			return
 		_map1_rom_dropped_below_40 = false
 		map1_controller.handle_valid_repetition(data)
-	feedback_label.modulate = Color(0.1, 0.75, 0.2)
+	feedback_label.modulate = Color("ffd85a")
 
 
 func _on_repetition_rejected(_data: Dictionary) -> void:
@@ -263,7 +262,7 @@ func _target_rom_ratio() -> float:
 
 
 func _unlock_next_difficulty(stability: int) -> bool:
-	if stability < 2:
+	if (TrackingStability.ENABLED and stability < 2):
 		return false
 	var current_level := _difficulty_level()
 	if current_level >= 3:
@@ -282,6 +281,8 @@ func _difficulty_level() -> int:
 
 
 func _stability_evaluation(stability: int) -> String:
+	if not TrackingStability.ENABLED:
+		return "HOÀN THÀNH"
 	if stability >= 3:
 		return "HOÀN HẢO"
 	if stability == 2:
@@ -308,16 +309,16 @@ func _feedback_text(code: String) -> String:
 		"ROCK_APPROACHING": "Tảng đá đang lăn tới gần! Hãy vươn hai tay về phía trước chuẩn bị.",
 		"ACTION_ZONE_READY": "Tảng đá đã vào tầm chém! Hãy co ép hai bả vai ra sau để phá đá!",
 		"POSITION_OK": "Tư thế tốt. Vươn hai tay về phía trước.",
-		"READY_FOR_NEXT_REP": "Sẵn sàng! Hãy co ép hai bả vai ra sau và giữ 0.7 giây để chém đá!",
-		"RELEASE_POSITION": "Đã chém vỡ đá! Hãy đưa hai tay về trước (ROM < 40%) để mở khóa lần chém mới.",
+		"READY_FOR_NEXT_REP": "Sẵn sàng! Hãy co ép hai bả vai ra sau để chém đá!",
+		"RELEASE_POSITION": "Đã chém vỡ đá! Hãy đưa hai tay về trước để thực hiện lần chém mới.",
 		"MOVEMENT_STARTED": "Đang co ép hai bả vai ra sau...",
 		"CONTINUE_MOVEMENT": "Tiếp tục ép chặt hai bả vai ra sau để chém đá!",
 		"TARGET_REACHED": "Đã ép bả vai tối đa! Giữ yên tư thế...",
-		"HOLD_STARTED": "Đang ép chặt bả vai... Giữ nguyên tư thế 0.7 giây!",
+		"HOLD_STARTED": "Đang ép chặt bả vai... Giữ nguyên tư thế!",
 		"KEEP_POSITION": "Đang ép chặt bả vai... Giữ nguyên tư thế!",
 		"HOLD_COMPLETED": "Tuyệt vời! Đã chém vỡ tảng đá!",
 		"REP_VALID": "Tuyệt vời! Đã chém tan tảng đá!",
-		"MOVEMENT_TOO_FAST": "Cử động quá nhanh! Hãy co ép chậm lại và giữ tư thế (0.7s) để tránh chấn thương khớp.",
+		"MOVEMENT_TOO_FAST": "Cử động quá nhanh! Hãy co ép chậm lại và giữ tư thế để tránh chấn thương khớp.",
 		"REP_REJECTED": "Lần tập chưa hợp lệ.",
 		"PHASE_REST": "Hoàn thành hiệp. Hãy nghỉ 30 giây.",
 		"NEXT_PHASE": "Bắt đầu hiệp tiếp theo.",

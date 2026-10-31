@@ -49,6 +49,7 @@ func _ready() -> void:
 	exercise_session.hold_interrupted.connect(_on_hold_interrupted)
 	exercise_session.rest_time_changed.connect(_on_rest_time_changed)
 	exercise_session.session_completed.connect(_on_session_completed)
+	PoseInput.pose_frame_received.connect(_on_pose_frame_received)
 
 	tracking_stability.grace_seconds = tracking_loss_grace_seconds
 	tracking_stability.setup(exercise_session, PoseInput)
@@ -107,7 +108,7 @@ func _on_session_feedback_changed(code: String) -> void:
 		display_code = "SLAB_DESCENDING"
 	feedback_label.text = _feedback_text(display_code)
 	if display_code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "LIFT_SUCCESS", "PREP_COMPLETED"]:
-		feedback_label.modulate = Color(0.1, 0.75, 0.2)
+		feedback_label.modulate = Color("ffd85a")
 	elif display_code in ["TRANSITION_DELAY_3", "TRANSITION_DELAY_2", "TRANSITION_DELAY_1", "PREP_POSITION", "REACH_OVERHEAD"]:
 		feedback_label.modulate = Color(0.2, 0.8, 1.0)
 	elif display_code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "TRACKING_LOST", "BACKEND_DISCONNECTED"]:
@@ -184,9 +185,21 @@ func _on_tracking_penalty_applied(_current: int, grace_seconds: float) -> void:
 	feedback_label.text = "Tracking gián đoạn quá %d giây: giảm 1 điểm Ổn định." % ceili(grace_seconds)
 
 
-func _on_action_window_changed(_is_open: bool) -> void:
-	# Duy trì nhận diện liên tục suốt phiên tập Map 2 để tránh ngắt kết nối và giật lag
-	pass
+func _on_action_window_changed(is_open: bool) -> void:
+	exercise_session.set_repetition_input_enabled(is_open)
+	if is_open:
+		_on_session_feedback_changed("ACTION_ZONE_READY")
+	else:
+		_on_session_feedback_changed("SLAB_DESCENDING")
+
+
+func _on_pose_frame_received(data: Dictionary) -> void:
+	if exercise_session.state != ExerciseSession.State.ACTIVE or not map2_controller.is_action_window_open():
+		return
+	var ex: Dictionary = data.get("exercise", {})
+	var fb_code: String = str(ex.get("feedback_code", ""))
+	if fb_code in ["PREP_POSITION", "PREP_COMPLETED", "REACH_OVERHEAD", "RETURN_TO_PREP"]:
+		_on_session_feedback_changed(fb_code)
 
 
 func _show_intro() -> void:
@@ -248,7 +261,7 @@ func _difficulty_level() -> int:
 
 
 func _unlock_next_difficulty(stability: int) -> bool:
-	if stability < 2 or _difficulty_level() >= 3:
+	if (TrackingStability.ENABLED and stability < 2) or _difficulty_level() >= 3:
 		return false
 	var previous_highest: int = Global.get_highest_unlocked_level(2)
 	Global.unlock_level_for_action(2, _difficulty_level() + 1)
@@ -256,6 +269,8 @@ func _unlock_next_difficulty(stability: int) -> bool:
 
 
 func _stability_evaluation(stability: int) -> String:
+	if not TrackingStability.ENABLED:
+		return "HOÀN THÀNH"
 	if stability >= 3: return "HOÀN HẢO"
 	if stability == 2: return "HOÀN THÀNH"
 	return "CẦN CẢI THIỆN ĐỘ ỔN ĐỊNH"
