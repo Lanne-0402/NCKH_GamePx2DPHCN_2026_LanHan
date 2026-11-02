@@ -242,6 +242,9 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                     self._send_json(400, {"ok": False, "error": "MISSING_PATIENT_ID"})
                     return
 
+                raw_sessions = payload.get("sessions", [])
+                recent_sessions = raw_sessions[-15:] if isinstance(raw_sessions, list) else []
+
                 doc = {
                     "_id": patient_id,
                     "patient_id": patient_id,
@@ -249,7 +252,7 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                     "max_rom_angle": float(payload.get("max_rom_angle", 0.0)),
                     "levels": payload.get("levels", {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1}),
                     "rom_history": payload.get("rom_history", []),
-                    "sessions": payload.get("sessions", []),
+                    "sessions": recent_sessions,
                     "updated_at_utc": str(
                         payload.get("updated_at_utc", datetime.now(timezone.utc).isoformat())
                     ),
@@ -259,21 +262,6 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                     {"$set": doc},
                     upsert=True,
                 )
-
-                # Dong bo luon cac buoi tap trong mang sessions sang collection exercise_sessions
-                sessions_list = doc.get("sessions", [])
-                if isinstance(sessions_list, list):
-                    for s_item in sessions_list:
-                        if isinstance(s_item, dict) and s_item.get("session_id"):
-                            sid = str(s_item["session_id"])
-                            s_doc = dict(s_item)
-                            s_doc["_id"] = sid
-                            s_doc["patient_id"] = patient_id
-                            db["exercise_sessions"].update_one(
-                                {"_id": sid},
-                                {"$set": s_doc},
-                                upsert=True,
-                            )
 
                 self._send_json(200, {
                     "ok": True,
