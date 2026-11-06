@@ -13,6 +13,7 @@ signal pose_frame_received(data: Dictionary)
 signal exercise_event_received(data: Dictionary)
 signal provider_error_received(data: Dictionary)
 signal camera_frame_received(image: Image)
+signal hand_control_received(data: Dictionary)
 
 const CONTRACT_VERSION := "1.0.0"
 
@@ -21,6 +22,7 @@ var active_exercise_id := ""
 var provider_connected := false
 var last_pose_frame: Dictionary = {}
 var last_tracking_status: Dictionary = {}
+var last_tracking_received_ms := -10000
 
 
 func open_connection() -> void:
@@ -61,18 +63,23 @@ func handle_message(message: Dictionary) -> bool:
 	var message_session := "" if (raw_session == null or str(raw_session) == "<null>") else str(raw_session)
 	var msg_type := str(message.get("type", ""))
 
-	var is_session_scoped := (msg_type != "server_hello" and msg_type != "error" and msg_type != "tracking_status" and msg_type != "camera_frame")
+	var is_session_scoped := (msg_type != "server_hello" and msg_type != "error" and msg_type != "tracking_status" and msg_type != "camera_frame" and msg_type != "hand_control")
 	if is_session_scoped and not active_session_id.is_empty() \
 			and not message_session.is_empty() \
 			and message_session != active_session_id:
 		return false
 
-	var payload: Dictionary = message.get("payload", {})
+	var payload: Dictionary = message.get("payload", {}).duplicate(true)
+	if msg_type in ["calibration_progress", "calibration_completed"]:
+		if active_session_id.is_empty() or message_session != active_session_id: return false
+		payload["session_id"] = message_session
+
 	match str(message.get("type", "")):
 		"server_hello":
 			provider_connected = true
 			connection_changed.emit(true, payload)
 		"tracking_status":
+			last_tracking_received_ms = Time.get_ticks_msec()
 			last_tracking_status = payload.duplicate(true)
 			tracking_status_changed.emit(payload)
 		"calibration_progress":
@@ -91,6 +98,8 @@ func handle_message(message: Dictionary) -> bool:
 				var img := Image.new()
 				if img.load_jpg_from_buffer(raw_bytes) == OK:
 					camera_frame_received.emit(img)
+		"hand_control":
+			hand_control_received.emit(payload)
 		"error":
 			provider_error_received.emit(payload)
 		_:

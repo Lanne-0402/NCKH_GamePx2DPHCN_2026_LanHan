@@ -24,10 +24,14 @@ static func arm(map_id: int, side: int, progress: float, other_side := false) ->
 	var w: Vector3
 	match map_id:
 		1:
+			# Start with both arms extended forward at shoulder height.
+			# Pull the elbows back while bending them to 90 degrees; reversing
+			# progress extends the arms again. Segment lengths stay constant.
 			s.z = -2*a
-			var angle := deg_to_rad(lerpf(5,-15,a))
-			e = s+Vector3(0,cos(angle),sin(angle))*LENGTH
-			w = e+Vector3(0,-sin(angle),cos(angle))*LENGTH
+			var upper_angle := deg_to_rad(lerpf(90,-15,a))
+			var lower_angle := deg_to_rad(lerpf(90,75,a))
+			e = s+Vector3(0,cos(upper_angle),sin(upper_angle))*LENGTH
+			w = e+Vector3(0,cos(lower_angle),sin(lower_angle))*LENGTH
 		2:
 			var upper := deg_to_rad(lerpf(20,80,a))
 			var lower := deg_to_rad(lerpf(110,85,a))

@@ -2,6 +2,7 @@
 [ext_resource type="Script" path="res://ui/screens/calibration/calibration_screen.gd" id="1"]
 [ext_resource type="Script" path="res://ui/screens/calibration/camera_placeholder.gd" id="2"]
 [node name="CalibrationScreen" type="Control"]
+unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -9,6 +10,7 @@ anchor_bottom = 1.0
 script = ExtResource("1")
 
 [node name="ColorRect" type="Control" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
@@ -17,6 +19,7 @@ offset_bottom = 648.0
 mouse_filter = 2
 
 [node name="BackButton" type="Button" parent="ColorRect"]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 32.0
 offset_top = 32.0
@@ -25,6 +28,7 @@ offset_bottom = 80.0
 text = "‹ Quay lại"
 
 [node name="Title" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 240.0
 offset_top = 28.0
@@ -37,6 +41,7 @@ theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 240.0
 offset_top = 79.0
@@ -49,6 +54,7 @@ theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
 horizontal_alignment = 1
 
 [node name="ColorRect2" type="Panel" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 32.0
 offset_top = 128.0
@@ -58,6 +64,7 @@ script = ExtResource("2")
 mouse_filter = 2
 
 [node name="CameraTitle" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 52.0
 offset_top = 145.0
@@ -69,6 +76,7 @@ theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
 
 [node name="CameraHint" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 76.0
 offset_top = 389.0
@@ -81,6 +89,7 @@ theme_override_colors/font_color = Color(0.96, 0.94, 0.85, 1)
 horizontal_alignment = 1
 
 [node name="InstructionCard" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 696.0
 offset_top = 128.0
@@ -89,28 +98,31 @@ offset_bottom = 608.0
 mouse_filter = 2
 
 [node name="Label2" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 148.0
 offset_right = 1096.0
 offset_bottom = 182.0
-text = "HIỆU CHỈNH · DANG 2 TAY NGANG VAI"
+text = "HIỆU CHỈNH TRƯỚC KHI TẬP"
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
 
 [node name="Steps" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 190.0
 offset_right = 1096.0
 offset_bottom = 282.0
-text = "Động tác: dang thẳng 2 tay sang 2 bên ngang vai (90°).\nĐể thấy rõ vai, khuỷu và hai tay.\nNhấn đo để thu mẫu trong 5 giây."
+text = "1. Đứng giữa khung, để rõ vai, khuỷu và hai tay.\n2. Dang hai tay theo hướng dẫn, giữ trong khả năng của bạn.\n3. Thu đủ 5 giây mẫu hợp lệ; tối đa 20 giây mỗi lần đo."
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
 
 [node name="Introduce" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 310.0
@@ -122,6 +134,7 @@ theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.21, 0.15, 0.08, 1)
 
 [node name="RomLabel" type="Label" parent="."]
+unique_name_in_owner = true
 offset_left = 720.0
 offset_top = 280.0
 offset_right = 1096.0
@@ -131,14 +144,16 @@ text = "Chỉ số hiện tại: —"
 autowrap_mode = 2
 
 [node name="ProgressCaption" type="Label" parent="."]
+unique_name_in_owner = true
 offset_left = 720.0
 offset_top = 382.0
 offset_right = 1096.0
 offset_bottom = 404.0
 theme_override_font_sizes/font_size = 16
-text = "Thời gian thu mẫu: 0.0 / 5.0 giây"
+text = "Mẫu hợp lệ: 0.0 / 5.0 giây"
 
 [node name="ProgressBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 404.0
@@ -148,6 +163,7 @@ max_value = 100.0
 show_percentage = true
 
 [node name="StartCalibButton" type="Button" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 446.0
@@ -156,6 +172,7 @@ offset_bottom = 500.0
 text = "BẮT ĐẦU ĐO"
 
 [node name="NextButton" type="Button" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_top = 516.0
@@ -165,6 +182,7 @@ text = "TIẾP TỤC · CHỌN MAP"
 disabled = true
 
 [node name="PoseStatusPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 32.0
 offset_top = 504.0
@@ -173,10 +191,12 @@ offset_bottom = 608.0
 
 
 [node name="MarginContainer" type="MarginContainer" parent="PoseStatusPanel"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/margin_left = 0
 theme_override_constants/margin_right = 0
 [node name="VBoxContainer" type="VBoxContainer" parent="PoseStatusPanel/MarginContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 2
 
@@ -188,6 +208,7 @@ theme_override_font_sizes/font_size = 18
 visible = false
 
 [node name="ConnectionLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Đang kiểm tra kết nối…"
 autowrap_mode = 2
@@ -195,6 +216,7 @@ theme_override_font_sizes/font_size = 18
 visible = true
 
 [node name="TrackingLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Chờ dữ liệu nhận diện"
 autowrap_mode = 2
@@ -202,6 +224,7 @@ theme_override_font_sizes/font_size = 18
 visible = true
 
 [node name="ConfidenceLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = ""
 autowrap_mode = 2
@@ -209,6 +232,7 @@ theme_override_font_sizes/font_size = 18
 visible = false
 
 [node name="FeedbackLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = ""
 autowrap_mode = 2
@@ -216,6 +240,7 @@ theme_override_font_sizes/font_size = 18
 visible = false
 
 [node name="HelpLabel" type="Label" parent="PoseStatusPanel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = ""
 autowrap_mode = 2
@@ -223,6 +248,7 @@ theme_override_font_sizes/font_size = 18
 visible = false
 
 [node name="DebugToggle" type="Button" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 460.0
 offset_top = 145.0
@@ -232,6 +258,7 @@ text = "Thông tin kỹ thuật"
 theme_override_font_sizes/font_size = 16
 
 [node name="DebugPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 64.0
 offset_top = 206.0
@@ -240,6 +267,7 @@ offset_bottom = 376.0
 visible = false
 
 [node name="Text" type="Label" parent="DebugPanel"]
+unique_name_in_owner = true
 layout_mode = 2
 text = ""
 autowrap_mode = 2

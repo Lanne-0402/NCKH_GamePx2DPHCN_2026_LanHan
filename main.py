@@ -6,17 +6,20 @@ Tac gia: Nong Thi Hong Lan (AI & Computer Vision Backend)
 """
 
 import asyncio
+import atexit
 import base64
 import cv2
 import json
 import math
 import os
-import time
+import signal
 import sys
+import time
 import websockets
 import mediapipe as mp
 from exercises_logic import ExercisesEvaluator, LandmarkPoint
-from mongodb_service import start_mongodb_bridge_thread
+from hand_service import HandService
+from mongodb_service import start_mongodb_bridge_thread, stop_mongodb_bridge
 
 def get_resource_path(relative_path: str) -> str:
     """Lay duong dan tuyet doi den file tai nguyen, ho tro ca chay truc tiep va khi dong goi qua PyInstaller."""
@@ -38,8 +41,9 @@ TARGET_FPS = 30
 POSE_SEND_FPS = 15    # Tan so gui pose_frame sang Godot
 CAMERA_SEND_FPS = 15  # Tan so gui camera_frame (video stream) sang Godot
 
-# Khoi tao bo danh gia y khoa
+# Khoi tao bo danh gia y khoa va bo dieu khien ban tay
 evaluator = ExercisesEvaluator()
+hand_service = HandService()
 
 app_state = {
     "session_id": None,
@@ -48,6 +52,8 @@ app_state = {
     "connected_client": None,
     "last_tracking_code": "",
     "last_tracking_status_send_time": 0.0,
+    "last_hand_active": False,
+    "last_hand_inactive_send_time": 0.0,
     "message_sequence": 0,
     "last_active_landmarks": None,
     "last_landmarks_time": 0.0,
@@ -63,6 +69,93 @@ app_state = {
 # Bien luu ket qua tu callback cua MediaPipe LiveStream
 latest_result = None
 latest_timestamp = 0
+
+# ==========================================
+# QUAN LY VONG DOI & GIAI PHONG TAI NGUYEN (GRACEFUL SHUTDOWN)
+# ==========================================
+is_shutting_down = False
+_cleaned_up = False
+_active_camera = None
+_active_landmarker = None
+
+
+def open_webcam(indices=(0, 1)):
+    """Thu mo camera qua DirectShow (uu tien Windows) hoac backend mac dinh."""
+    for idx in indices:
+        if sys.platform.startswith("win"):
+            cap = cv2.VideoCapture(idx, cv2.CAP_DSHOW)
+            if cap.isOpened():
+                ret, _ = cap.read()
+                if ret:
+                    return cap
+                cap.release()
+        cap = cv2.VideoCapture(idx)
+        if cap.isOpened():
+            ret, _ = cap.read()
+            if ret:
+                return cap
+            cap.release()
+    return None
+
+
+def cleanup_resources():
+    """Giai phong sach se toan bo tai nguyen: Camera, OpenCV, Socket, MongoDB."""
+    global is_shutting_down, _active_camera, _active_landmarker, _cleaned_up
+    is_shutting_down = True
+    if _cleaned_up:
+        return
+    _cleaned_up = True
+    print("\n[System] Dang thu hoi tai nguyen an toan (Graceful Cleanup)...")
+
+    # 1. Giai phong Camera
+    if _active_camera is not None:
+        try:
+            if _active_camera.isOpened():
+                _active_camera.release()
+            print("[System] Da giai phong Camera.")
+        except Exception as exc:
+            print(f"[System] Loi khi giai phong Camera: {exc}")
+        _active_camera = None
+
+    # 2. Dong cac cua so OpenCV
+    try:
+        cv2.destroyAllWindows()
+    except Exception:
+        pass
+
+    # 3. Dong MediaPipe Landmarker
+    if _active_landmarker is not None:
+        try:
+            _active_landmarker.close()
+            print("[System] Da dong MediaPipe Landmarker.")
+        except Exception:
+            pass
+        _active_landmarker = None
+
+    # 4. Giai phong cong HTTP Bridge cua MongoDB (8766)
+    try:
+        stop_mongodb_bridge()
+    except Exception as exc:
+        print(f"[System] Loi khi giai phong MongoDB Bridge: {exc}")
+
+
+def _signal_handler(sig, _frame):
+    """Bat su kien SIGINT (Ctrl+C) hoac SIGTERM de kich hoat Shutdown trật tự."""
+    global is_shutting_down
+    if not is_shutting_down:
+        print(f"\n[System] Nhan tin hieu ngat ({sig}). Dang dong ung dung...")
+        is_shutting_down = True
+
+
+try:
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, _signal_handler)
+except Exception:
+    pass
+
+atexit.register(cleanup_resources)
 
 
 def update_result(result, output_image, timestamp_ms):
@@ -87,12 +180,14 @@ def make_message(msg_type: str, payload: dict, session_id: str = None) -> dict:
     }
 
 
-async def send_to_godot(msg_dict: dict):
-    """Gui goi tin JSON sang Godot an toan."""
+async def send_to_godot(msg_dict: dict, timeout: float = 0.05):
+    """Gui goi tin JSON sang Godot an toan voi timeout chong block camera loop."""
     client = app_state["connected_client"]
     if client:
         try:
-            await client.send(json.dumps(msg_dict))
+            await asyncio.wait_for(client.send(json.dumps(msg_dict)), timeout=timeout)
+        except asyncio.TimeoutError:
+            pass  # Drop packet khi client buffer bi nghen de bao toan camera loop khong bi freeze
         except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedOK):
             app_state["connected_client"] = None
 
@@ -122,6 +217,7 @@ async def websocket_handler(websocket):
             "calibration",
             "movement_speed_validation",
             "hold_validation",
+            "hand_control",
         ],
     })
     await websocket.send(json.dumps(server_hello))
@@ -379,6 +475,8 @@ def draw_hud_and_skeleton(frame, landmarks, fps: float, exercise_info: dict):
 # LUONG XU LY CAMERA CHINH (MAIN CAMERA LOOP)
 # ==========================================
 async def process_camera():
+    global is_shutting_down, _active_camera, _active_landmarker
+
     if not os.path.exists(MODEL_PATH):
         print(f"[Loi] Khong tim thay file model: {MODEL_PATH}")
         return
@@ -395,28 +493,34 @@ async def process_camera():
         min_tracking_confidence=0.6,
     )
     landmarker = mp.tasks.vision.PoseLandmarker.create_from_options(options)
+    _active_landmarker = landmarker
     print(f"[MediaPipe] Da tai thanh cong mo hinh: {MODEL_PATH}")
 
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("[Canh bao] Thu ket noi camera index 1...")
-        cap = cv2.VideoCapture(1)
-
-    if not cap.isOpened():
-        print("[Loi] Khong the ket noi Webcam (index 0 hoac 1). Server van tiep tuc duy tri WebSocket.")
-        while True:
-            await asyncio.sleep(2.0)
+    # Thu mo Camera khoi dau
+    cap = open_webcam()
+    if cap is None:
+        print("[Canh bao] Khong the ket noi Webcam luc khoi dong. Dang cho nguoi dung cam camera...")
+        while not is_shutting_down:
             if app_state["connected_client"]:
                 err_msg = make_message("tracking_status", {
-                    "status": "no_camera",
+                    "status": "camera_disconnected",
                     "person_detected": False,
                     "confidence": 0.0,
                     "full_body_visible": False,
                     "required_body_visible": False,
                     "camera_fps": 0.0,
-                    "feedback_code": "LIGHTING_TOO_LOW",
+                    "feedback_code": "CAMERA_DISCONNECTED",
                 })
                 await send_to_godot(err_msg)
+            await asyncio.sleep(2.0)
+            cap = open_webcam()
+            if cap is not None:
+                print("[Camera] Da ket noi duoc Webcam!")
+                break
+        if is_shutting_down:
+            return
+
+    _active_camera = cap
 
     frame_interval = 1.0 / TARGET_FPS
     pose_send_interval = 1.0 / POSE_SEND_FPS
@@ -430,13 +534,101 @@ async def process_camera():
     current_fps = 30.0
 
     print("[Camera] Bat dau luong hinh anh Webcam...")
+    consecutive_drop_count = 0
+    MAX_CONSECUTIVE_DROPS = 30  # ~1.0s lien tuc o 30 FPS
 
-    while cap.isOpened():
+    while not is_shutting_down:
         loop_start = time.time()
-        success, frame = cap.read()
-        if not success:
-            await asyncio.sleep(0.05)
+        success, frame = cap.read() if (cap and cap.isOpened()) else (False, None)
+        if not success or frame is None:
+            consecutive_drop_count += 1
+            if consecutive_drop_count < MAX_CONSECUTIVE_DROPS:
+                await asyncio.sleep(0.033)
+                continue
+
+            # Mat tin hieu camera -> Kich hoat Auto-Recovery
+            print(f"[Camera] Canh bao: Mat tin hieu Webcam ({consecutive_drop_count} frames). Tien hanh Auto-Recovery...")
+            reconnected = False
+            for retry_idx in range(1, 4):
+                if is_shutting_down:
+                    break
+                print(f"[Camera] Thu ket noi lai camera (Lan {retry_idx}/3)...")
+                if cap:
+                    try:
+                        cap.release()
+                    except Exception:
+                        pass
+                await asyncio.sleep(1.5)
+                new_cap = open_webcam()
+                if new_cap is not None:
+                    cap = new_cap
+                    _active_camera = cap
+                    consecutive_drop_count = 0
+                    reconnected = True
+                    print(f"[Camera] Ket noi lai thanh cong o lan thu {retry_idx}!")
+                    break
+
+            if reconnected:
+                if app_state["connected_client"]:
+                    recover_msg = make_message("tracking_status", {
+                        "status": "tracking",
+                        "person_detected": False,
+                        "confidence": 0.0,
+                        "full_body_visible": False,
+                        "required_body_visible": False,
+                        "camera_fps": 0.0,
+                        "feedback_code": "CAMERA_RECONNECTED",
+                    })
+                    await send_to_godot(recover_msg)
+                continue
+
+            # Sau 3 lan thu that bai -> Gui thong bao CAMERA_DISCONNECTED sang Godot
+            print("[Camera] Mat ket noi Webcam hoan toan. Gui CAMERA_DISCONNECTED sang Godot...")
+            if app_state["connected_client"]:
+                disconnect_msg = make_message("tracking_status", {
+                    "status": "camera_disconnected",
+                    "person_detected": False,
+                    "confidence": 0.0,
+                    "full_body_visible": False,
+                    "required_body_visible": False,
+                    "camera_fps": 0.0,
+                    "feedback_code": "CAMERA_DISCONNECTED",
+                })
+                await send_to_godot(disconnect_msg)
+
+            # Vong lap tham do nen (Background Auto-Recovery Polling) moi 2.5 giay
+            while not is_shutting_down:
+                await asyncio.sleep(2.5)
+                if app_state["connected_client"]:
+                    await send_to_godot(make_message("tracking_status", {
+                        "status": "camera_disconnected",
+                        "person_detected": False,
+                        "confidence": 0.0,
+                        "full_body_visible": False,
+                        "required_body_visible": False,
+                        "camera_fps": 0.0,
+                        "feedback_code": "CAMERA_DISCONNECTED",
+                    }))
+                new_cap = open_webcam()
+                if new_cap is not None:
+                    cap = new_cap
+                    _active_camera = cap
+                    consecutive_drop_count = 0
+                    print("[Camera] Webcam da duoc cam lai! Tu dong phuc hoi he thong.")
+                    if app_state["connected_client"]:
+                        await send_to_godot(make_message("tracking_status", {
+                            "status": "tracking",
+                            "person_detected": False,
+                            "confidence": 0.0,
+                            "full_body_visible": False,
+                            "required_body_visible": False,
+                            "camera_fps": 0.0,
+                            "feedback_code": "CAMERA_RECONNECTED",
+                        }))
+                    break
             continue
+
+        consecutive_drop_count = 0
 
         # Lat hinh anh ngang (Mirror view) giup nguoi tap tu nhien nhu soi guong
         frame = cv2.flip(frame, 1)
@@ -484,6 +676,29 @@ async def process_camera():
                     "feedback_code": tracking_code,
                 })
                 await send_to_godot(tracking_msg)
+
+        # 1.5. Xu ly dieu khien con tro ban tay (Adaptive Throttle)
+        hand_payload = hand_service.process(active_landmarks)
+        hand_active = hand_payload.get("active", False)
+
+        if app_state["connected_client"]:
+            should_send_hand = False
+            if hand_active:
+                should_send_hand = True
+                app_state["last_hand_active"] = True
+            elif app_state.get("last_hand_active", False):
+                # Vua ha tay xuong -> gui ngay goi tin inactive de Frontend an con tro
+                should_send_hand = True
+                app_state["last_hand_active"] = False
+                app_state["last_hand_inactive_send_time"] = now
+            elif (now - app_state.get("last_hand_inactive_send_time", 0.0)) >= 2.0:
+                # Dinh ky dong bo trang thai inactive
+                should_send_hand = True
+                app_state["last_hand_inactive_send_time"] = now
+
+            if should_send_hand:
+                hand_msg = make_message("hand_control", hand_payload)
+                await send_to_godot(hand_msg)
 
         # 2. Xu ly Calibration (neu dang duoc yeu cau)
         if evaluator.calibration_active:
@@ -565,9 +780,10 @@ async def process_camera():
         # 5. Man hinh OpenCV desktop: ve day du ca Skeleton va HUD banner thong so phuc vu debug tren PC
         draw_hud_and_skeleton(frame, active_landmarks, current_fps, hud_info)
 
-        cv2.imshow("Nghiên cứu Game PHCN - AI Arm Tracking (Esc to Exit)", frame)
-        if cv2.waitKey(1) & 0xFF == 27:
+        cv2.imshow("Nghien cuu Game PHCN - AI Arm Tracking (Esc to Exit)", frame)
+        if (cv2.waitKey(1) & 0xFF) == 27:
             print("[Camera] Nguoi dung nhan Esc de thoat.")
+            is_shutting_down = True
             break
 
         # Tinh thoi gian nghi cua vong lap de on dinh FPS
@@ -575,7 +791,8 @@ async def process_camera():
         sleep_time = max(0.001, frame_interval - elapsed)
         await asyncio.sleep(sleep_time)
 
-    cap.release()
+    if cap and cap.isOpened():
+        cap.release()
     cv2.destroyAllWindows()
 
 
@@ -588,15 +805,25 @@ async def main():
     print("  Tuan thu JSON Contract 1.0.0 | Godot <-> Python/MediaPipe")
     print("=" * 60)
     start_mongodb_bridge_thread()
-    server = await websockets.serve(websocket_handler, HOST, PORT)
+    server = await websockets.serve(websocket_handler, HOST, PORT, reuse_address=True)
     print(f"[WebSocket] Server dang lang nghe tai: ws://{HOST}:{PORT}")
     try:
         await process_camera()
+    except asyncio.CancelledError:
+        pass
+    except Exception as exc:
+        print(f"[System] Ngoai le trong tien trinh chinh: {exc}")
     finally:
+        cleanup_resources()
         server.close()
         await server.wait_closed()
-        print("[System] Server da tat hoan toan.")
+        print("[System] Server WebSocket va toan bo tai nguyen da duoc giai phong sach se.")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n[System] Chuong trinh ket thuc boi nguoi dung (KeyboardInterrupt).")
+    finally:
+        cleanup_resources()

@@ -21,14 +21,7 @@ class LandmarkPoint:
 
 
 class EMAFilter:
-    """
-    Bo loc tin hieu Adaptive EMA ket hop:
-    1. Chuan hoa huong Trai-Phai (Canonical Left-Right Anti-Swap): Chong hien tuong MediaPipe
-       nham mat truoc/mat sau lam dao lon khop vai/khuyu/co tay trai-phai khi cang tay chia vao camera.
-    2. Gioi han van toc cuc dai moi frame (Velocity Outlier Clamping): Chong nhay vot diem khop dot ngot.
-    3. He so lam muot thich ung rieng cho XY va Z (Adaptive XY + Deep Z Smoothing):
-       Giu khop xuong dung yen vung chac khi giu tinh (Hold) nhung van phan hoi muot khi cu dong.
-    """
+    """Bo loc tin hieu Adaptive EMA."""
     SYMMETRIC_PAIRS = (
         (11, 12),  # Vai trai - Vai phai
         (13, 14),  # Khuyu trai - Khuyu phai
@@ -429,14 +422,10 @@ class ExercisesEvaluator:
         return True, "POSITION_OK"
 
     # ==========================
-    # TINH TOAN METRICS CALIBRATION (T-POSE DANG 2 TAY SANG NGANG 90 DO)
+    # Calibration
     # ==========================
     def _evaluate_calibration_t_pose(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Do bien do tong quat bang dong tac Dang thang 2 canh tay sang 2 ben ngang vai (T-Pose 0 -> 90 do).
-        - Thang do chuan y khoa: 0 do (tay xuoi doc than) -> 90 do (dang ngang bang vai).
-        - Ket qua duoc chuan hoa thanh calib_factor de ap dung dong nhat cho ca 5 Map.
-        """
+        """Calibration"""
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
         l_wr, r_wr = lm[15], lm[16]
@@ -509,23 +498,10 @@ class ExercisesEvaluator:
         }
 
     # ==========================
-    # TINH TOAN METRICS CHO 5 BAI TAP
+    # Map 1
     # ==========================
     def _evaluate_map1_scapular_retraction(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Map 1: Ep 2 khuỷu tay ra sau (Scapular Retraction).
-        Quy trinh 2 dong tac chuan:
-        1. DONG TAC CHUAN BI (Hinh 1):
-           - De 2 tay xuoi xuong thoai mai hoac dua 2 tay ra truoc mat.
-           - Khuỷu tay khong ep lui ra sau vai (3D z_el <= z_sh + 0.035).
-           - Khi nguoi tap vao dung the chuan bi -> prep_rom = 1.0 (100%) -> on dinh 0.20s chuyen sang nhan dien dong tac giu.
-        2. DONG TAC GIU (Hinh 2):
-           - Gap khuyu tay 90 do (thang goc voi than).
-           - Ep 2 khuyu tay ra sau tuong tu nhu kẹp mot cay viet chi sau lung.
-           - 2D (x, y): Khoang cach 2 vai, 2 khuyu tay huong xuong duoi vai, ha thap xap xi 2/3 khoang cach 2 vai (calibrated).
-           - 3D (x, y, z): Do sau 2 diem khuyu tay lui sau so voi 2 diem vai (z_el > z_sh).
-           - ROM tang dan deu 0% -> 100%. Khi cham 100%, giu 0.7 giay de hoan thanh 1 rep truoc khi nhan vat pha da.
-        """
+        """Map 1"""
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
         l_wr, r_wr = lm[15], lm[16]
@@ -687,21 +663,11 @@ class ExercisesEvaluator:
             "target_depth": 0.05,
         }
 
+    # ==========================
+    # Map 2
+    # ==========================
     def _evaluate_map2_wall_abduction(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Map 2: Dang va xoay ngoai khop vai (Wall Abduction & External Rotation), giu 5 giay.
-        CHI SU DUNG TOA DO 2D (x, y) TUYET DOI KHONG DUNG TRUC Z VA KHONG PHU THUOC DIEM HONG (HIP).
-        - Dong tac 1 (Tu the chuan bi - Hinh 1):
-          + Dung thang, canh tay dang vua sang 2 ben (~75 - 95 do so voi truc doc than).
-          + Cang tay tao voi canh tay mot goc ~90 do dong thoi huong thang len tren, long ban tay ngua.
-          + Khi dat dung tu the chuan bi, prep_rom = 1.0 (100%) -> chuyen sang nhan dien dong tac giu.
-        - Dong tac 2 (Dong tac giu 5 giay - Hinh 2):
-          + Duoi cang tay va dang canh tay ve phia dau - giu 5 giay.
-          + ROM tang dan deu (tuyen tinh) theo goc noi/duoi cua khuyu tay nguoi tap
-            tu 90 do len 180 do (o bien do hieu chinh Calibration 90 do) ket hop dang canh tay ve phia dau.
-          + Chong nhan nham: Loai bo hoan toan cac tu the duoi khuyu tay nhung ha tay xuong, dang ngang T-pose,
-            hoac dan tay sau gay (Map 4).
-        """
+        """Map 2"""
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
         l_wr, r_wr = lm[15], lm[16]
@@ -941,22 +907,11 @@ class ExercisesEvaluator:
             "target_angle": 180.0,
         }
 
+    # ==========================
+    # Map 3
+    # ==========================
     def _evaluate_map3_horizontal_shoulder_adduction(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Map 3: Khep ngang khop vai (Horizontal Shoulder Adduction), giu 5 giay.
-        CHI SU DUNG TOA DO 2D (x, y) TUYET DOI KHONG DUNG TRUC Z VA KHONG PHU THUOC DIEM HONG (HIP).
-        - Dong tac 1 (Tu the chuan bi - Hinh 1):
-          + Canh tay gap 90 do, cang tay nang ngang bang vai (khuyu tay xap xi ngang bang diem vai).
-          + 2 ban tay nam up vao nhau dong thoi huong len tren (phia tren vai).
-          + Khi dat dung tu the chuan bi, prep_rom = 1.0 (100%) -> chuyen sang nhan dien dong tac giu.
-        - Dong tac 2 (Dong tac giu 5 giay - Hinh 2):
-          + Dang canh tay sang 2 ben (nhieu nhat co the) - giu 5 giay.
-          + ROM tang dan deu theo dong tac khuyu tay nguoi tap: khoang cach 2D giua 2 khuyu tay
-            tu nho (~0.44x distance_shoulder o Hinh 1) den xap xi gap doi khoang cach 2 ba vai
-            (~2.0x distance_shoulder, do xap xi phu thuoc vao Calibration khi do truoc khi tap).
-          + Chong nhan nham: Su dung 2D (x, y) kiem tra khuyu tay xap xi ngang bang diem vai
-            va cang tay/ban tay huong thang len phia tren vai (loai bo T-pose, buong tay, Map 1, Map 2, Map 4).
-        """
+        """Map 3"""
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
         l_wr, r_wr = lm[15], lm[16]
@@ -1150,26 +1105,11 @@ class ExercisesEvaluator:
             "target_ratio": round(target_elbow_ratio, 2),
         }
 
+    # ==========================
+    # Map 4
+    # ==========================
     def _evaluate_map4_hands_behind_head(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Map 4: Van dong khop vai o tu the 2 tay om dau (Hands behind head / Khep mo khuyu tay)
-        Su dung HOAN TOAN TOA DO 2D (x, y) va moc 2 tai (lm[7], lm[8]), xu ly che khuat 2 co tay sau dau:
-        - Hinh 1 (Dong tac chuan bi):
-          + Canh tay dang 2 ben, cang tay tao voi canh tay 90 do huong len tren, 2 ban tay dua ra sau dau.
-          + So lieu 2D thuc te tren Hinh 1:
-            * Khoang cach 2D 2 khuyu tay / distance_shoulder: elbow_ratio = 2.06 (mo rong ~2x vai)
-            * Do cao 2 khuyu tay ngang bang 2 tai (lm[7], lm[8]): (ear.y - el.y) / sw = +0.11..+0.13
-            * Do cao 2 khuyu tay so voi vai: (sh.y - el.y) / sw = +0.55..+0.56 (cao hon vai)
-            * Khoang cach 2D tu co tay den tai cung ben: wrist_ear_dist / sw = 0.20..0.21 (sat ben tai)
-            * Khoang cach 2D 2 co tay / distance_shoulder: wrist_ratio = 0.67
-        - Hinh 2 (Dong tac giu 5 giay):
-          + Tu tu khep 2 canh tay ve phia duong giua (nhieu nhat co the) - giu 5 giay, tro ve tu the ban dau.
-          + So lieu 2D thuc te tren Hinh 2:
-            * Khoang cach 2D 2 khuyu tay / distance_shoulder: elbow_ratio = 0.81 (nho hon 1.0x distance_shoulder)
-            * Do cao 2 khuyu tay van ngang bang 2 tai: (ear.y - el.y) / sw = +0.12..+0.21
-            * 2 co tay sau dau bi che khuat (visibility = 0.07..0.14): he thong tu dong bo qua dieu kien
-              co tay khi bi che khuat de khong bao gio mat tracking hay ket tien trinh.
-        """
+        """Map 4"""
         l_ear, r_ear = lm[7], lm[8]
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
@@ -1398,25 +1338,11 @@ class ExercisesEvaluator:
             "target_ratio": round(target_close_ratio, 2),
         }
 
+    # ==========================
+    # Map 5
+    # ==========================
     def _evaluate_map5_cross_body_stretch(self, lm: List[LandmarkPoint]) -> Dict[str, Any]:
-        """
-        Map 5: Keo cang canh tay qua nguc (Cross-body Shoulder Stretch), giu 30 giay.
-        Su dung HOAN TOAN TOA DO 2D (x, y), xu ly che khuat cac diem khong dung trong thuat toan,
-        phan biet chat che Trai - Phai va bat buoc doi ben giua 2 hiep:
-        - Dong tac chuan bi (ready):
-          + Nguoi tap dung thang, tha long 2 vai can bang, 2 tay tha long tu nhien truoc khi keo cang.
-          + Khi ghi nhan dung dong tac chuan bi, prep_rom = 1.0 (100%) -> chuyen sang nhan dien dong tac giu.
-        - Dong tac keo cang & giu 30 giay (Hinh 1):
-          + Keo cang canh tay bang cach tha long vai 1 ben, dung cang tay ben con lai nhe nhang keo va giu
-            canh tay ben kia qua nguc cang xa cang tot (kep giua cang tay va thanh nguc truoc).
-          + Cac dieu kien 2D (x, y) chat che:
-            1) Khoang cach 2D giua khuyu tay ben keo (el_stretch) voi vai ben kia (sh_opp) giam dan
-               ve xap xi nho hon 1/2 khoang cach 2 ba vai (<= 0.50 * distance_shoulder, do xap xi phu thuoc Calibration).
-            2) Do cao 2D cua khuyu tay ben keo (el_stretch.y) xap xi gan bang do cao cua diem vai (tuy Calibration).
-            3) Diem co tay cua tay do (wr_support) nam gan vai cung ben (sh_opp) VA nam gan khuyu tay khac ben (el_stretch).
-          + Cac diem khong dung trong thuat toan (nhu co tay cua tay duoi wr_stretch, hong 23-24, mat 0-10...)
-            hoac diem bi che khuat mot phan khi 2 tay ep sat truoc nguc KHONG BAO GIO lam mat nhan dien.
-        """
+        """Map 5"""
         l_sh, r_sh = lm[11], lm[12]
         l_el, r_el = lm[13], lm[14]
         l_wr, r_wr = lm[15], lm[16]
@@ -1797,6 +1723,11 @@ class ExercisesEvaluator:
             completed_msg = {
                 "exercise_id": self.calib_exercise_id,
                 "success": bool(self.calib_max_rom_combined > 5.0),
+                "measurement_kind": "normalized_t_pose",
+                "valid_elapsed_ms": self.calib_duration_ms,
+                "duration_ms": self.calib_duration_ms,
+                "valid_sample_count": 30,
+                "sample_quality": 1.0,
                 "target_side": self.calib_target_side,
                 "max_rom": {
                     "left": round(self.calib_max_rom_left, 1),
@@ -1921,15 +1852,7 @@ class ExercisesEvaluator:
 
         # 2. May trang thai cu dong (State Machine)
         if exercise_id == "scapular_retraction":
-            # ==========================================
-            # MAP 1: EP 2 KHUYU TAY RA SAU (SCAPULAR RETRACTION)
-            # QUY TRINH 2 DONG TAC CHUAN:
-            # 1) DONG TAC CHUAN BI (HINH 1): Hai tay xuoi xuong / dua ra truoc thoai mai.
-            #    Khi dat dung tu the Hinh 1 -> ROM ghi nhan 100% (1.0) -> chuyen sang nhan dien dong tac giu.
-            # 2) DONG TAC GIU (HINH 2): Gap khuyu tay 90 do va ep 2 khuyu tay ra sau lung.
-            #    ROM tang dan deu theo do ha va ep ra sau cua khuyu tay (2 khuyu tay ha thap xap xi 2/3 vai theo Calibration).
-            #    Khi ROM cham 100% -> giu 0.7 giay (700ms) -> Hoan thanh 1 rep -> Nhan vat pha da -> Tro ve the chuan bi.
-            # ==========================================
+            # Map 1
             prep_rom = eval_data.get("prep_rom", eval_data.get("prep_score", 0.0))
             is_prep_pose = eval_data.get("is_prep_pose", False)
             hold_rom = eval_data.get("hold_rom", 0.0)
@@ -2157,15 +2080,7 @@ class ExercisesEvaluator:
                     feedback_code = "MOVEMENT_TOO_FAST"
 
         elif exercise_id == "wall_abduction_external_rotation":
-            # ==========================================
-            # MAP 2: DANG VA XOAY NGOAI KHOP VAI (WALL ABDUCTION & EXTERNAL ROTATION)
-            # QUY TRINH 2 DONG TAC CHUAN (CHI DUNG TOA DO 2D x, y):
-            # 1) DONG TAC CHUAN BI (HINH 1): Canh tay dang vua, cang tay vuong goc 90 do huong len.
-            #    Khi dat dung tu the Hinh 1 -> ROM ghi nhan 100% (1.0) -> chuyen sang nhan dien dong tac giu.
-            # 2) DONG TAC GIU (HINH 2): Duoi cang tay va dang canh tay ve phia dau.
-            #    ROM tang dan deu theo goc noi khuyu tay (90 -> 180 do). Khi ROM cham 100% -> giu 5 giay
-            #    -> Hoan thanh 1 lan tap -> Nhan vat day tang da -> Tro ve vi tri ban dau.
-            # ==========================================
+            # Map 2
             prep_rom = eval_data.get("prep_rom", eval_data["prep_score"])
             is_prep_pose = eval_data["is_prep_pose"]
             hold_rom = eval_data["hold_rom"]
@@ -2389,16 +2304,7 @@ class ExercisesEvaluator:
                     feedback_code = "PREP_POSITION"
 
         elif exercise_id == "horizontal_shoulder_adduction":
-            # ==========================================
-            # MAP 3: KHEP NGANG KHOP VAI (HORIZONTAL SHOULDER ADDUCTION)
-            # QUY TRINH 2 DONG TAC CHUAN (CHI DUNG TOA DO 2D x, y):
-            # 1) DONG TAC CHUAN BI (HINH 1): Canh tay gap 90 do, cang tay nang ngang bang vai,
-            #    2 ban tay nam up vao nhau dong thoi huong len tren.
-            #    Khi dat dung tu the Hinh 1 -> ROM ghi nhan 100% (1.0) -> chuyen sang nhan dien dong tac giu.
-            # 2) DONG TAC GIU (HINH 2): Dang canh tay sang 2 ben (nhieu nhat co the) - giu 5 giay.
-            #    ROM tang dan deu theo khoang cach 2 khuyu tay (tu nho den xap xi gap doi distance_shoulder
-            #    tuy thuoc vao Calibration). Khi ROM cham 100% -> giu 5 giay -> Nhan vat day buc tuong!
-            # ==========================================
+            # Map 3
             prep_rom = eval_data.get("prep_rom", eval_data["prep_score"])
             is_prep_pose = eval_data["is_prep_pose"]
             hold_rom = eval_data["hold_rom"]
@@ -2650,18 +2556,7 @@ class ExercisesEvaluator:
                     feedback_code = "PREP_POSITION"
 
         elif exercise_id == "hands_behind_head":
-            # ==========================================
-            # MAP 4: VAN DONG KHOP VAI O TU THE 2 TAY OM DAU (HANDS BEHIND HEAD)
-            # QUY TRINH 2 DONG TAC RO RANG:
-            # 1) DONG TAC 1 (HINH 1 - CHUAN BI):
-            #    - Canh tay dang 2 ben, cang tay 90 do huong len tren, 2 ban tay dua ra sau dau.
-            #    - ROM tang len 100% khi vao dung the chuan bi, on dinh 0.35s -> chuyen sang 'closing'.
-            # 2) DONG TAC 2 (HINH 2 - GIU 5 GIAY):
-            #    - Khi vua sang 'closing', ROM bat dau tu 0% va tang dan deu tuyen tinh theo
-            #      khoang cach 2 khuyu tay khep ve duong giua (tu lon ~1.7x vai ve < 1.0x distance_shoulder,
-            #      tuy thuoc vao Calibration).
-            #    - Khi ROM cham 100% -> giu 5 giay (5000ms) -> hoan thanh 1 rep -> nhan vat nhay len bac!
-            # ==========================================
+            # Map 4
             prep_rom = eval_data.get("prep_rom", eval_data["prep_score"])
             is_prep_pose = eval_data["is_prep_pose"]
             hold_rom = eval_data["hold_rom"]
@@ -2854,19 +2749,7 @@ class ExercisesEvaluator:
                     })
 
         else:
-            # ==========================================
-            # MAP 5: KEO CANG CANH TAY QUA NGUC (CROSS-BODY SHOULDER STRETCH - 30S)
-            # QUY TRINH 2 GIAI DOAN:
-            # 1) GIAI DOAN CHUAN BI (ready):
-            #    - Nguoi tap dung thang, tha long 2 vai can bang.
-            #    - ROM ghi nhan 100% (1.0), giu on dinh 0.35s -> chuyen sang nhan dien dong tac giu ('contracting').
-            # 2) GIAI DOAN KEO CANG & GIU 30 GIAY ('contracting' -> 'holding'):
-            #    - ROM bat dau tu 0% va tang dan deu tuyen tinh khi khoang cach giua khuyu tay ben nay
-            #      voi vai ben kia nho dan ve <= 1/2 khoang cach 2 ba vai (<= 0.50 * distance_shoulder, tuy Calibration),
-            #      dong thoi co tay ben kia nam gan vai cung ben va khuyu tay khac ben de kep ep.
-            #    - Phan biet chat che Trai - Phai: bat buoc doi ben o Hiep 2.
-            #    - Khi ROM cham 100% -> giu 30 giay (30000ms) -> hoan thanh 1 lan tap!
-            # ==========================================
+            # Map 5
             prep_rom = eval_data.get("prep_rom", eval_data.get("prep_score", 0.0))
             is_prep_pose = eval_data.get("is_prep_pose", False)
             hold_rom = eval_data.get("hold_rom", 0.0)

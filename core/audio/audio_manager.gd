@@ -57,6 +57,17 @@ func stream(path: String, looping := false) -> AudioStream:
 	cache[key] = result
 	return result
 
+func stop_music() -> void:
+	if music_fade != null: music_fade.kill()
+	if music != null:
+		music.stop()
+		music.stream = null
+	current_track = -1
+
+func stop_all_sfx() -> void:
+	for player in voices:
+		if player != null: player.stop()
+
 func play_music(id: int) -> void:
 	id = clampi(id, 0, 5)
 	if current_track == id and music.playing: return

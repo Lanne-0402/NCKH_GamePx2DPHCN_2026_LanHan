@@ -24,7 +24,8 @@ from urllib.parse import unquote, urlparse
 MONGO_BRIDGE_HOST = "127.0.0.1"
 MONGO_BRIDGE_PORT = 8766
 DEFAULT_DB_NAME = "rehab_pixel_game"
-CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mongodb_config.json")
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cloud_config.json")
+LEGACY_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mongodb_config.json")
 
 try:
     from pymongo import MongoClient
@@ -41,14 +42,17 @@ _cached_uri = ""
 
 
 def load_saved_mongo_config() -> dict:
-    """Doc cau hinh MongoDB URI da luu tren may (neu co)."""
+    """Doc cau hinh MongoDB URI tu cloud_config.json, env hoac legacy config."""
     cfg = {
         "mongodb_uri": os.environ.get("MONGODB_URI", "mongodb://localhost:27017"),
         "database_name": os.environ.get("MONGODB_DB", DEFAULT_DB_NAME),
     }
-    if os.path.exists(CONFIG_FILE_PATH):
+    target_path = CONFIG_FILE_PATH if os.path.exists(CONFIG_FILE_PATH) else (
+        LEGACY_CONFIG_PATH if os.path.exists(LEGACY_CONFIG_PATH) else None
+    )
+    if target_path:
         try:
-            with open(CONFIG_FILE_PATH, "r", encoding="utf-8") as f:
+            with open(target_path, "r", encoding="utf-8") as f:
                 saved = json.load(f)
                 if isinstance(saved, dict):
                     if saved.get("mongodb_uri"):
@@ -56,12 +60,12 @@ def load_saved_mongo_config() -> dict:
                     if saved.get("database_name"):
                         cfg["database_name"] = str(saved["database_name"]).strip()
         except Exception as exc:
-            print(f"[MongoDB] Khong doc duoc mongodb_config.json: {exc}")
+            print(f"[MongoDB] Khong doc duoc {os.path.basename(target_path)}: {exc}")
     return cfg
 
 
 def save_mongo_config(mongodb_uri: str, database_name: str) -> None:
-    """Luu cau hinh MongoDB URI xuong file de dung chung cho ca Game va Web App."""
+    """Luu cau hinh MongoDB URI xuong cloud_config.json (ngoai Git)."""
     try:
         with open(CONFIG_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(
@@ -75,11 +79,11 @@ def save_mongo_config(mongodb_uri: str, database_name: str) -> None:
                 ensure_ascii=False,
             )
     except Exception as exc:
-        print(f"[MongoDB] Khong the luu mongodb_config.json: {exc}")
+        print(f"[MongoDB] Khong the luu cloud_config.json: {exc}")
 
 
 def get_mongo_database(override_uri: str = "", override_db: str = ""):
-    """Lay ket noi toi database MongoDB (co cache ket noi de tang toc)."""
+    """Lay ket noi toi database MongoDB (co cache ket noi va thiet lap unique index)."""
     global _cached_client, _cached_uri
 
     if not PYMONGO_AVAILABLE:
@@ -105,7 +109,13 @@ def get_mongo_database(override_uri: str = "", override_db: str = ""):
             _cached_uri = uri
             save_mongo_config(uri, db_name)
 
-        return _cached_client[db_name]
+        db = _cached_client[db_name]
+        try:
+            db["exercise_sessions"].create_index([("session_id", 1)], unique=True)
+            db["patient_profiles"].create_index([("patient_id", 1)], unique=True)
+        except Exception:
+            pass
+        return db
 
 
 class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
@@ -217,6 +227,8 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
             if path.startswith("/api/patients/") and path.endswith("/reset"):
                 patient_id = unquote(path.split("/api/patients/", 1)[1].split("/reset", 1)[0]).strip()
                 if patient_id:
+                    expected_gen = int(payload.get("expected_generation", 0))
+                    new_gen = expected_gen + 1
                     db["patient_profiles"].update_one(
                         {"_id": patient_id},
                         {"$set": {
@@ -225,12 +237,18 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                             "levels": {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1},
                             "rom_history": [],
                             "sessions": [],
+                            "generation": new_gen,
                             "updated_at_utc": datetime.now(timezone.utc).isoformat(),
                         }},
                         upsert=True,
                     )
                     db["exercise_sessions"].delete_many({"patient_id": patient_id})
-                    self._send_json(200, {"ok": True, "patient_id": patient_id, "action": "reset"})
+                    self._send_json(200, {
+                        "ok": True,
+                        "patient_id": patient_id,
+                        "action": "reset",
+                        "generation": new_gen,
+                    })
                     return
 
             # 2. POST/PUT /api/patients hoac /api/patients/<patient_id>
@@ -263,6 +281,23 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                     upsert=True,
                 )
 
+                # Dong bo tat ca cac buoi tap vao collection exercise_sessions (Idempotent Upsert)
+                for s in (raw_sessions if isinstance(raw_sessions, list) else []):
+                    if isinstance(s, dict) and s.get("session_id"):
+                        sid = str(s["session_id"]).strip()
+                        if sid:
+                            s_doc = dict(s)
+                            s_doc["_id"] = sid
+                            s_doc["session_id"] = sid
+                            s_doc["patient_id"] = patient_id
+                            if "updated_at_utc" not in s_doc:
+                                s_doc["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
+                            db["exercise_sessions"].update_one(
+                                {"_id": sid},
+                                {"$set": s_doc},
+                                upsert=True,
+                            )
+
                 self._send_json(200, {
                     "ok": True,
                     "patient_id": patient_id,
@@ -271,7 +306,7 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                 })
                 return
 
-            # 2. POST /api/sessions -> Luu 1 buoi tap moi hoan thanh
+            # 2. POST /api/sessions -> Luu 1 buoi tap moi hoan thanh (Idempotent Upsert theo _id = session_id)
             if path == "/api/sessions":
                 session_id = str(payload.get("session_id", "")).strip()
                 patient_id = str(payload.get("patient_id", "BN001")).strip()
@@ -283,6 +318,8 @@ class MongoBridgeRequestHandler(BaseHTTPRequestHandler):
                 s_doc["_id"] = session_id
                 s_doc["session_id"] = session_id
                 s_doc["patient_id"] = patient_id
+                if "updated_at_utc" not in s_doc:
+                    s_doc["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
                 db["exercise_sessions"].update_one(
                     {"_id": session_id},
                     {"$set": s_doc},
@@ -460,7 +497,9 @@ def start_mongodb_bridge_thread(host: str = MONGO_BRIDGE_HOST, port: int = MONGO
     def _run_server():
         global _bridge_server_instance
         try:
+            ThreadingHTTPServer.allow_reuse_address = True
             server = ThreadingHTTPServer((host, port), MongoBridgeRequestHandler)
+            server.daemon_threads = True
             _bridge_server_instance = server
             status = "SAN SANG" if PYMONGO_AVAILABLE else "CHUA CAI PYMONGO (pip install pymongo dnspython)"
             print(f"[MongoDB Bridge] Server REST API dang chay tai: http://{host}:{port} | Trang thai: {status}")
@@ -472,6 +511,21 @@ def start_mongodb_bridge_thread(host: str = MONGO_BRIDGE_HOST, port: int = MONGO
 
     thread = threading.Thread(target=_run_server, name="MongoDBBridgeThread", daemon=True)
     thread.start()
+
+
+def stop_mongodb_bridge() -> None:
+    """Dong server MongoDB HTTP va giai phong cong socket an toan."""
+    global _bridge_server_instance
+    if _bridge_server_instance is not None:
+        try:
+            print("[MongoDB Bridge] Dang giai phong cong HTTP Bridge...")
+            _bridge_server_instance.shutdown()
+            _bridge_server_instance.server_close()
+            print("[MongoDB Bridge] Da giai phong cong thanh cong.")
+        except Exception as exc:
+            print(f"[MongoDB Bridge] Loi khi giai phong server: {exc}")
+        finally:
+            _bridge_server_instance = None
 
 
 if __name__ == "__main__":
@@ -507,8 +561,11 @@ if __name__ == "__main__":
             print(f"[MongoDB Ket qua]: Loi ket noi: {exc}")
         sys.exit(0)
 
+    ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer((MONGO_BRIDGE_HOST, MONGO_BRIDGE_PORT), MongoBridgeRequestHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\n[MongoDB Bridge] Da dung server.")
+    finally:
+        server.server_close()

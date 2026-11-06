@@ -1,5 +1,6 @@
 class_name Map1Controller
 extends Node
+const VisualPace = preload("res://ui/shared/visual_pace.gd")
 
 signal rock_progress_changed(destroyed: int, total: int)
 signal action_window_changed(is_open: bool)
@@ -97,7 +98,7 @@ func _spawn_next_rock() -> void:
 	_current_rock = ROCK_SCENE.instantiate()
 	_current_rock.set_rock_variant(rocks_destroyed)
 	_current_rock.position = spawn_position.position
-	_current_rock.configure_exercise_rock(action_zone.position.x, rock_approach_speed)
+	_current_rock.configure_exercise_rock(action_zone.position.x, rock_approach_speed * VisualPace.factor())
 	_current_rock.set_movement_enabled(_session_active)
 	_current_rock.reached_action_zone.connect(_on_rock_reached_action_zone)
 	_current_rock.collided_with_player.connect(_on_rock_collided_with_player)

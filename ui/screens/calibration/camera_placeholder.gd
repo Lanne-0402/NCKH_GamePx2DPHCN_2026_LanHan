@@ -8,6 +8,8 @@ func _ready() -> void:
 	add_theme_stylebox_override("panel", style)
 func _draw() -> void:
 	if not show_body: return
+	var scale_factor := minf(size.x / 640.0, size.y / 360.0)
+	draw_set_transform(Vector2((size.x - 640 * scale_factor) / 2.0, 0), 0, Vector2.ONE * scale_factor)
 	var ink := Color("799b8c")
 	ink.a = 0.65
 	draw_arc(Vector2(320,117),26,0,TAU,48,ink,3,true)

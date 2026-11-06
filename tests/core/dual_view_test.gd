@@ -4,6 +4,10 @@ func _ready() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	assert(not Global.persistence_enabled)
+	PoseInput.begin_offline_preview()
+	if DisplayServer.get_name() != "headless":
+		DirAccess.make_dir_recursive_absolute("res://tests/visual_output")
 	# Full motion sweep: segment lengths, projections, handedness and layout.
 	for id in range(1,6):
 		Global.selected_action = id
@@ -32,7 +36,8 @@ func _run() -> void:
 						assert(screen.y-12>122 and screen.y+12<384,"Vertical bounds map %d sample %d side %d point %s" % [id,sample,side,str(screen)])
 						assert(screen.x>24 and screen.x<816)
 				if id == 1:
-					assert(absf((p[1]-p[0]).normalized().dot((p[2]-p[1]).normalized()))<0.001)
+					var bend := (p[1]-p[0]).normalized().dot((p[2]-p[1]).normalized())
+					assert(absf(bend-cos(guide.actor.amount*PI/2))<0.001)
 				if id == 4:
 					assert(p[2].is_equal_approx(Vector3(side*3,-60,-5)))
 				if id == 3:
@@ -46,7 +51,15 @@ func _run() -> void:
 		var before = Pose.arm(id,1,0)
 		var after = Pose.arm(id,1,1)
 		match id:
-			1: assert(after[0].z<before[0].z and after[1].z<before[1].z)
+			1:
+				assert(after[0].z<before[0].z and after[1].z<before[1].z)
+				assert(is_equal_approx(before[0].y,before[2].y))
+				assert(is_equal_approx(before[2].z-before[0].z,28.0))
+				for instant in [0.0,2.9,15.0]:
+					guide.seconds = instant
+					guide._update()
+					assert(guide.actor.amount == 0.0)
+					assert(guide.caption.text.to_lower().contains("duỗi"))
 			2: assert(after[2].y<before[2].y)
 			3:
 				assert(absf(before[1].x)<=2.01,"Reference: elbows together, not just wrists")
@@ -58,11 +71,11 @@ func _run() -> void:
 				assert(after[2].distance_to(stretched[1])>4,"Support must not press elbow")
 				assert(((after[1]+after[2])*0.5).distance_to(stretched[0].lerp(stretched[1],0.6))<1.01,"Mid forearm must support upper arm")
 		if DisplayServer.get_name() != "headless":
-			for instant in [0.0,4.0,8.0,11.5,14.9]:
+			for instant in [0.0,4.0,8.0,11.5,15.0]:
 				guide.seconds = instant
 				guide._update()
 				await RenderingServer.frame_post_draw
-				get_viewport().get_texture().get_image().save_png("res://tests/visual_output/dual_map%d_%s.png" % [id,str(instant).replace(".","_")])
+				assert(get_viewport().get_texture().get_image().save_png("res://tests/visual_output/dual_map%d_%s.png" % [id,str(instant).replace(".","_")]) == OK)
 		# Settings freezes both views during the initial guide.
 		guide.set_process(true)
 		var menu = level.get_node("SettingsMenu")

@@ -4,6 +4,10 @@ signal save_finished(success: bool)
 signal patient_profile_changed(patient_id: String)
 signal cloud_sync_status_changed(status_text: String, success: bool)
 
+const ReportData := preload("res://core/autoload/report_data.gd")
+var cloud_outbox: Array = []
+var report_sync: Node
+
 const SAVE_VERSION := 1
 var save_path := "user://player_progress.json"
 var cloud_config_path := "user://cloud_config.json"
@@ -61,6 +65,8 @@ func _ready() -> void:
 	add_child(preload("res://ui/shared/screen_keyboard.gd").new())
 
 	_setup_cloud_http_nodes()
+	report_sync = preload("res://core/autoload/report_sync.gd").new()
+	add_child(report_sync)
 
 	# Smoke tests never touch the player's real profile.
 	for argument in OS.get_cmdline_user_args():
@@ -74,6 +80,7 @@ func _ready() -> void:
 	else:
 		_ensure_current_patient_profile()
 	apply_audio()
+	report_sync.kick.call_deferred()
 
 
 func _setup_cloud_http_nodes() -> void:
@@ -154,6 +161,7 @@ func load_progress() -> bool:
 	volume_percent = float(value.audio.volume)
 	audio_muted = bool(value.audio.muted)
 	session_history = value.sessions.duplicate(true)
+	cloud_outbox = value.get("cloud_outbox", []).duplicate(true)
 
 	if value.get("current_patient_id") is String and not str(value.get("current_patient_id")).strip_edges().is_empty():
 		current_patient_id = str(value.get("current_patient_id")).strip_edges()
@@ -181,6 +189,7 @@ func save_progress() -> bool:
 		levels[str(action)] = get_highest_unlocked_level(action)
 	var value := {
 		"version": SAVE_VERSION,
+		"cloud_outbox": cloud_outbox,
 		"levels": levels,
 		"audio": {"volume": volume_percent, "muted": audio_muted},
 		"sessions": session_history,
@@ -231,29 +240,6 @@ func _clean_legacy_demo_data() -> void:
 	if cleaned:
 		session_history = valid_sessions
 
-	var old_pnames := [
-		"Nguyễn Văn An", "Trần Thị Bình", "Lê Hoàng Cường", "Phạm Thị Dung", "Hoàng Văn Em",
-		"Vũ Thị Hoa", "Đặng Văn Giang", "Bùi Thị Hạnh", "Ngô Văn Hùng", "Đỗ Thị Mai"
-	]
-	for pid in patient_profiles.keys():
-		var prof: Dictionary = patient_profiles[pid]
-		var prof_dirty := false
-		if prof.get("sessions") is Array:
-			var p_sessions: Array = []
-			for s in prof["sessions"]:
-				if s is Dictionary and str(s.get("session_id", "")).begins_with("demo-"):
-					prof_dirty = true
-					continue
-				p_sessions.append(s)
-			if prof_dirty:
-				prof["sessions"] = p_sessions
-		if old_pnames.has(str(prof.get("patient_name", ""))):
-			prof["patient_name"] = "Bệnh nhân " + str(pid)
-			prof["max_rom_angle"] = 0.0
-			prof["rom_history"] = []
-			prof_dirty = true
-		if prof_dirty:
-			patient_profiles[pid] = prof
 
 
 func _ensure_current_patient_profile() -> void:
@@ -284,6 +270,7 @@ func _sync_active_patient_into_profiles() -> void:
 		levels[str(action)] = get_highest_unlocked_level(action)
 	patient_profiles[current_patient_id] = {
 		"patient_id": current_patient_id,
+		"generation": int(patient_profiles.get(current_patient_id, {}).get("generation", 0)),
 		"patient_name": current_patient_name,
 		"max_rom_angle": max_rom_angle,
 		"levels": levels,
@@ -337,9 +324,18 @@ func switch_patient(new_patient_id: String, new_patient_name := "") -> void:
 
 
 func reset_patient(target_id := "") -> void:
+	if report_sync.busy: return
 	var pid := current_patient_id if target_id.is_empty() else target_id.strip_edges().to_upper()
+	var generation := int(patient_profiles.get(pid, {}).get("generation", 0))
+	for job in cloud_outbox:
+		if job.patient_id == pid and job.reset: return
+	cloud_outbox = cloud_outbox.filter(func(job): return str(job.patient_id) != pid)
+	# Queue a durable, idempotent reset before clearing the local snapshot.
+	if cloud_db_provider == "mongodb":
+		report_sync.enqueue(pid, true)
 	patient_profiles[pid] = {
 		"patient_id": pid,
+		"generation": generation + 1,
 		"patient_name": "Bệnh nhân " + pid,
 		"max_rom_angle": 0.0,
 		"levels": {"1": 1, "2": 1, "3": 1, "4": 1, "5": 1},
@@ -361,8 +357,7 @@ func reset_patient(target_id := "") -> void:
 		highest_unlocked_level = 1
 	save_progress()
 	patient_profile_changed.emit(pid)
-	if is_cloud_configured():
-		sync_patient_to_cloud(pid)
+	sync_patient_to_cloud(pid)
 
 
 func get_patient_sessions(patient_id := "") -> Array:
@@ -372,11 +367,11 @@ func get_patient_sessions(patient_id := "") -> Array:
 		if not entry is Dictionary:
 			continue
 		if not entry.has("patient_id"):
-			filtered.append(entry)
-			continue
+			continue # Keep legacy unassigned records in storage, never attribute them to every patient.
 		var entry_pid := str(entry.get("patient_id", target_id))
 		if entry_pid == target_id:
 			filtered.append(entry)
+	filtered.sort_custom(func(a: Dictionary, b: Dictionary): return str(a.get("ended_at_utc", a.get("completed_at_utc", ""))) < str(b.get("ended_at_utc", b.get("completed_at_utc", ""))))
 	return filtered
 
 
@@ -389,21 +384,23 @@ func get_patient_rom_history(patient_id := "") -> Array:
 	return []
 
 
-func record_calibration_rom(rom_deg: float, date_override := "") -> void:
-	if rom_deg <= 0.0:
-		return
+func record_calibration_rom(rom_deg: float, date_override := "") -> bool:
+	if PoseInput.get("offline_preview_enabled") == true: return false
+	if not is_finite(rom_deg) or rom_deg <= 0.0:
+		return false
 	max_rom_angle = roundf(rom_deg * 10.0) / 10.0
 	var date_str := date_override if not date_override.is_empty() else Time.get_date_string_from_system()
 	_upsert_daily_rom(date_str, max_rom_angle, "calibration")
-	save_progress()
+	var saved := save_progress()
 	sync_patient_to_cloud()
+	return saved
 
 
 func _upsert_daily_rom(date_str: String, rom_deg: float, source: String) -> void:
 	var rounded := roundf(rom_deg * 10.0) / 10.0
 	for i in range(rom_history.size()):
 		var item: Dictionary = rom_history[i]
-		if str(item.get("date", "")) == date_str:
+		if str(item.get("date", "")) == date_str and str(item.get("source", "")) == source:
 			if rounded >= float(item.get("rom_angle", 0.0)):
 				item["rom_angle"] = rounded
 				item["source"] = source
@@ -423,23 +420,17 @@ func _upsert_daily_rom(date_str: String, rom_deg: float, source: String) -> void
 
 
 func record_session(summary: Dictionary) -> void:
+	if PoseInput.get("offline_preview_enabled") == true: return
 	for entry in session_history:
-		if entry.session_id == summary.session_id:
+		if str(entry.get("session_id", "")) == str(summary.get("session_id", "")):
 			return
 	var enriched := summary.duplicate(true)
 	if not enriched.has("patient_id"):
 		enriched["patient_id"] = current_patient_id
 	if not enriched.has("patient_name"):
 		enriched["patient_name"] = current_patient_name
-	if not enriched.has("rom_angle"):
-		enriched["rom_angle"] = roundf(max_rom_angle * 10.0) / 10.0
 	session_history.append(enriched)
-
-	var session_rom := float(enriched.get("rom_angle", 0.0))
-	if session_rom > 0.0:
-		var completed_str := str(enriched.get("completed_at_utc", ""))
-		var date_part := completed_str.substr(0, 10) if completed_str.length() >= 10 else Time.get_date_string_from_system()
-		_upsert_daily_rom(date_part, session_rom, "session")
+	# Session ROM is not a new calibration measurement.
 
 	save_progress()
 	sync_session_to_cloud(enriched)
@@ -567,6 +558,11 @@ func _update_cloud_status(text: String, success: bool) -> void:
 
 
 func sync_patient_to_cloud(patient_id := "") -> void:
+	if cloud_db_provider == "mongodb":
+		var pid := current_patient_id if patient_id.is_empty() else patient_id.strip_edges().to_upper()
+		report_sync.enqueue(pid)
+		report_sync.kick.call_deferred()
+		return
 	if not persistence_enabled or not is_cloud_configured() or not is_instance_valid(_http_sync_profile):
 		return
 	_sync_active_patient_into_profiles()
@@ -608,6 +604,9 @@ func sync_patient_to_cloud(patient_id := "") -> void:
 
 
 func sync_session_to_cloud(session_entry: Dictionary) -> void:
+	if cloud_db_provider == "mongodb":
+		report_sync.enqueue(str(session_entry.get("patient_id", current_patient_id)))
+		return
 	if not persistence_enabled or not is_cloud_configured() or not is_instance_valid(_http_sync_session):
 		return
 	_http_sync_session.cancel_request()
@@ -648,6 +647,9 @@ func sync_session_to_cloud(session_entry: Dictionary) -> void:
 
 
 func fetch_patient_from_cloud(patient_id := "") -> void:
+	if cloud_db_provider == "mongodb":
+		sync_patient_to_cloud(patient_id)
+		return
 	if not persistence_enabled or not is_cloud_configured() or not is_instance_valid(_http_fetch_profile):
 		return
 	var target_id := current_patient_id if patient_id.is_empty() else patient_id.strip_edges().to_upper()
@@ -767,6 +769,7 @@ func get_unlocked_level_for_action(action_id: int) -> int:
 
 
 func unlock_level_for_action(action_id: int, level: int) -> void:
+	if PoseInput.get("offline_preview_enabled") == true: return
 	var next_level := clampi(level, 1, 3)
 	unlocked_levels_by_action[action_id] = maxi(get_highest_unlocked_level(action_id), next_level)
 	# Keep the old field synchronized for older UI/code that may still read it.
@@ -792,3 +795,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			else:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
+
+
+func apply_cloud_profile(pid: String, profile: Dictionary) -> void:
+	patient_profiles[pid] = profile.duplicate(true)
+	var kept: Array = []
+	for entry in session_history:
+		if str(entry.get("patient_id", "")) != pid: kept.append(entry)
+	for entry in profile.get("sessions", []):
+		if entry is Dictionary and str(entry.get("patient_id", "")) == pid: kept.append(entry)
+	session_history = kept
+	if pid == current_patient_id: _load_active_patient_from_profiles()
+	save_progress()
+	patient_profile_changed.emit(pid)

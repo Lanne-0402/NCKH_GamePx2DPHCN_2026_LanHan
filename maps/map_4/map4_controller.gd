@@ -1,5 +1,6 @@
 class_name Map4Controller
 extends Node
+const VisualPace = preload("res://ui/shared/visual_pace.gd")
 
 signal climb_progress_changed(completed: int, total: int)
 signal action_window_changed(is_open: bool)
@@ -158,7 +159,7 @@ func _start_run_tween() -> void:
 	var end := _step_jump_zone(_current_step_index)
 	_set_player_locked_position(start)
 	_run_tween = _make_movement_tween()
-	_run_tween.tween_method(_set_player_locked_position, start, end, ledge_approach_duration) \
+	_run_tween.tween_method(_set_player_locked_position, start, end, VisualPace.duration(ledge_approach_duration)) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_run_tween.finished.connect(_finish_run_phase)
 
@@ -186,7 +187,7 @@ func _play_jump_to(step_index: int) -> void:
 		"target": target,
 	}
 	_jump_tween = _make_movement_tween()
-	_jump_tween.tween_method(_apply_jump_arc.bind(jump_state), 0.0, 1.0, jump_duration) \
+	_jump_tween.tween_method(_apply_jump_arc.bind(jump_state), 0.0, 1.0, VisualPace.duration(jump_duration)) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _jump_tween.finished
 	_set_player_locked_position(target)

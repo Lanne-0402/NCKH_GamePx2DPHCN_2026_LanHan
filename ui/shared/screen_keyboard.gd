@@ -20,7 +20,7 @@ func _scene_ready() -> void:
 		"res://ui/screens/level_selection/main_menu.tscn":
 			first = "VBoxContainer/Button"
 			back_path = "BackButton"
-		"res://ui/screens/calibration/calibration_screen.tscn": back_path = "ColorRect/BackButton"
+		"res://ui/screens/calibration/calibration_screen.tscn": back_path = "%BackButton"
 	var control := scene.get_node_or_null(first) as Control if not first.is_empty() else null
 	if control != null: control.grab_focus()
 

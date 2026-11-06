@@ -11,6 +11,9 @@ const RECONNECT_DELAY_SECONDS := 2.0
 @export var server_url := "ws://127.0.0.1:8765"
 @export var auto_reconnect := true
 
+var offline_preview_enabled := false
+var _preview_auto_reconnect := true
+
 var _socket := WebSocketPeer.new()
 var _reconnect_timer := 0.0
 var _was_connected := false
@@ -58,6 +61,11 @@ func _notification(what: int) -> void:
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	if "--no-save" in OS.get_cmdline_user_args():
+		auto_reconnect = false
+		set_process(true)
+		return
 	_try_start_embedded_backend()
 	set_process(true)
 	set_process_unhandled_key_input(true)
@@ -152,6 +160,8 @@ func _is_socket_active() -> bool:
 
 
 func _try_connect_socket() -> void:
+	if offline_preview_enabled: return
+	if "--no-save" in OS.get_cmdline_user_args(): return
 	_socket.close()
 	var err := _socket.connect_to_url(server_url)
 	if err != OK:
@@ -512,3 +522,31 @@ func _can_simulate_movement() -> bool:
 
 func _current_exercise_id() -> String:
 	return DEFAULT_EXERCISE_ID if active_exercise_id.is_empty() else active_exercise_id
+
+
+# Explicit local preview: reuse existing simulator, never reconnect to live input.
+func begin_offline_preview() -> void:
+	if not OS.is_debug_build(): return
+	if offline_preview_enabled: return
+	stop_exercise("offline_preview")
+	_preview_auto_reconnect = auto_reconnect
+	auto_reconnect = false
+	close_connection()
+	offline_preview_enabled = true
+	_connected = true
+	provider_connected = true
+	last_pose_frame.clear()
+	connection_changed.emit(true, {"pose_engine": "mock", "camera_available": false})
+	set_tracking(true)
+
+
+func end_offline_preview() -> void:
+	if not offline_preview_enabled: return
+	stop_exercise("offline_preview_ended")
+	close_connection()
+	offline_preview_enabled = false
+	last_pose_frame.clear()
+	last_tracking_status.clear()
+	last_tracking_received_ms = -10000
+	auto_reconnect = _preview_auto_reconnect
+	open_connection()

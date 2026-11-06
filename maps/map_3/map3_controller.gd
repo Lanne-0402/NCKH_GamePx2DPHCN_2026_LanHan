@@ -1,5 +1,6 @@
 class_name Map3Controller
 extends Node
+const VisualPace = preload("res://ui/shared/visual_pace.gd")
 
 signal push_progress_changed(completed: int, total: int)
 signal action_window_changed(is_open: bool)
@@ -22,6 +23,7 @@ const DIRECTION_NAMES := {
 }
 
 const CENTER := Vector2(576.0, 320.0)
+const WALL_HALF_HEIGHT := 120.0
 const SAFE_GAP := 400.0
 const RETREAT_GAP := 720.0
 
@@ -51,7 +53,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not enabled or not _session_active or not _walls_closing:
 		return
-	_close_progress = move_toward(_close_progress, 1.0, wall_close_speed * delta / SAFE_GAP)
+	_close_progress = move_toward(_close_progress, 1.0, wall_close_speed * VisualPace.factor() * delta / SAFE_GAP)
 	_apply_wall_positions(_close_progress, _hold_retreat)
 	if is_equal_approx(_close_progress, 1.0):
 		_walls_closing = false
@@ -104,7 +106,7 @@ func handle_valid_repetition(_data: Dictionary) -> void:
 	_play_push_burst()
 	_hold_retreat = 0.0
 	hold_visual_progress_changed.emit(0.0)
-	await get_tree().create_timer(0.45, false).timeout
+	await get_tree().create_timer(VisualPace.duration(0.45), false).timeout
 	if pushes_completed < total_pushes:
 		_begin_wave(pushes_completed)
 
@@ -158,8 +160,8 @@ func _apply_wall_positions(close_t: float, retreat_t: float) -> void:
 			wall_b.rotation = PI
 			var left_x := lerpf(-120.0, CENTER.x - gap * 0.5, close_t)
 			var right_x := lerpf(1272.0, CENTER.x + gap * 0.5, close_t)
-			wall_a.position = Vector2(left_x, CENTER.y)
-			wall_b.position = Vector2(right_x, CENTER.y)
+			wall_a.position = Vector2(left_x, CENTER.y - WALL_HALF_HEIGHT)
+			wall_b.position = Vector2(right_x, CENTER.y - WALL_HALF_HEIGHT)
 		WallDirection.VERTICAL:
 			wall_a.rotation = PI * 0.5
 			wall_b.rotation = -PI * 0.5
@@ -196,8 +198,8 @@ func _play_push_burst() -> void:
 	energy_wave.position = CENTER
 	energy_wave.scale = Vector2(0.5, 0.5)
 	var tween := create_tween()
-	tween.tween_property(energy_wave, "scale", Vector2(2.2, 2.2), 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_callback(func() -> void: energy_wave.hide()).set_delay(0.35)
+	tween.tween_property(energy_wave, "scale", Vector2(2.2, 2.2), VisualPace.duration(0.35)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_callback(func() -> void: energy_wave.hide()).set_delay(VisualPace.duration(0.35))
 
 
 func _offscreen_position(current: Vector2, direction_sign: float) -> Vector2:

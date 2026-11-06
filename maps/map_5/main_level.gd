@@ -83,6 +83,7 @@ func _ready() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if not OS.is_debug_build(): return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
 		exercise_session.debug_skip_rest()
 
@@ -96,7 +97,7 @@ func _on_session_state_changed(current: ExerciseSession.State, _previous: Exerci
 	state_label.text = "TRẠNG THÁI: %s" % _state_text(current)
 	rest_label.visible = current == ExerciseSession.State.RESTING
 	if current == ExerciseSession.State.RESTING:
-		rest_label.text = "THƯ GIÃN: %d GIÂY\nNhấn N để bỏ qua khi debug" % ceili(exercise_session.rest_seconds_remaining)
+		rest_label.text = "THƯ GIÃN: %d GIÂY" % ceili(exercise_session.rest_seconds_remaining)
 	var gameplay_active := current == ExerciseSession.State.ACTIVE
 	map5_controller.set_session_active(gameplay_active)
 	if gameplay_active:
@@ -113,12 +114,19 @@ func _on_session_progress_changed(rep: int, reps_required: int, phase: int, phas
 
 func _on_session_feedback_changed(code: String) -> void:
 	feedback_label.text = _feedback_text(code)
-	if code in ["REP_VALID", "TRACKING_RESTORED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "PREP_COMPLETED"]:
+	if code in ["REP_VALID", "TRACKING_RESTORED", "CAMERA_RECONNECTED", "ACTION_ZONE_READY", "HOLD_COMPLETED", "PREP_COMPLETED"]:
 		feedback_label.modulate = Color("ffd85a")
-	elif code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "TRACKING_LOST", "BACKEND_DISCONNECTED", "SWITCH_ARM_SIDE", "CLAMP_WITH_OTHER_HAND"]:
+	elif code in ["MOVEMENT_TOO_FAST", "REP_REJECTED", "HOLD_INTERRUPTED", "CAMERA_DISCONNECTED", "TRACKING_LOST", "BACKEND_DISCONNECTED", "SWITCH_ARM_SIDE", "CLAMP_WITH_OTHER_HAND"]:
 		feedback_label.modulate = Color(0.9, 0.2, 0.1)
 	else:
 		feedback_label.modulate = Color.WHITE
+
+	if code in ["HOLD_INTERRUPTED", "MOVEMENT_TOO_FAST", "REP_REJECTED"]:
+		var current_text := feedback_label.text
+		get_tree().create_timer(2.0).timeout.connect(func():
+			if is_instance_valid(feedback_label) and feedback_label.text == current_text:
+				_on_session_feedback_changed("PREP_POSITION")
+		)
 
 
 func _on_pose_frame_received(data: Dictionary) -> void:
@@ -174,7 +182,7 @@ func _on_hold_visual_progress_changed(progress: float) -> void:
 
 
 func _on_rest_time_changed(seconds_remaining: float) -> void:
-	rest_label.text = "THƯ GIÃN: %d GIÂY\nNhấn N để bỏ qua khi debug" % ceili(seconds_remaining)
+	rest_label.text = "THƯ GIÃN: %d GIÂY" % ceili(seconds_remaining)
 
 
 func _on_session_completed(summary: Dictionary) -> void:
@@ -353,6 +361,8 @@ func _feedback_text(code: String) -> String:
 		"REP_REJECTED": "Lần căng chưa hợp lệ.",
 		"PHASE_REST": "Hoàn thành hiệp 1. Hãy thư giãn 30 giây trước khi đổi sang tay đối diện.",
 		"NEXT_PHASE": "Bắt đầu hiệp 2: Hãy đổi sang kéo căng cánh tay đối diện qua ngực!",
+		"CAMERA_DISCONNECTED": "Mất kết nối Camera! Vui lòng kiểm tra lại dây cắm.",
+		"CAMERA_RECONNECTED": "Đã kết nối lại Camera. Tiếp tục buổi tập.",
 		"TRACKING_LOST": "Không nhìn thấy người chơi. Buổi tập đã tạm dừng.",
 		"TRACKING_RESTORED": "Đã nhận diện lại. Tiếp tục buổi tập.",
 		"BACKEND_DISCONNECTED": "Mất kết nối với hệ thống nhận diện.",

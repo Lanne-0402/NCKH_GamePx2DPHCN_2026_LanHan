@@ -1,5 +1,6 @@
 class_name Map2Controller
 extends Node
+const VisualPace = preload("res://ui/shared/visual_pace.gd")
 
 signal lift_progress_changed(completed: int, total: int)
 signal action_window_changed(is_open: bool)
@@ -22,7 +23,7 @@ var _action_window_open := false
 func _process(delta: float) -> void:
 	if not enabled or not _session_active or not _slab_descending:
 		return
-	slab.position.y = move_toward(slab.position.y, slab_support_y, slab_descent_speed * delta)
+	slab.position.y = move_toward(slab.position.y, slab_support_y, slab_descent_speed * VisualPace.factor() * delta)
 	if is_equal_approx(slab.position.y, slab_support_y):
 		_slab_descending = false
 		_set_action_window(true)
@@ -71,7 +72,7 @@ func handle_valid_repetition(_data: Dictionary) -> void:
 	lift_progress_changed.emit(lifts_completed, total_lifts)
 	hold_visual_progress_changed.emit(0.0)
 	var tween := create_tween()
-	tween.tween_property(slab, "position:y", 70.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(slab, "position:y", 70.0, VisualPace.duration(0.35)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await tween.finished
 	if lifts_completed < total_lifts:
 		slab.position.y = -40.0

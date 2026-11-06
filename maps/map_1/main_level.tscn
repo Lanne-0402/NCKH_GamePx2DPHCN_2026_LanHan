@@ -216,7 +216,7 @@ theme_override_colors/font_shadow_color = Color(0.10, 0.12, 0.08, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 14
-text = "MOCK: R = rep đúng | F = rep sai | T = tracking | K = kết nối | N = bỏ qua nghỉ"
+text = ""
 
 [node name="ResultPanel" type="PanelContainer" parent="UI" unique_id=1314480756]
 offset_left = 365.0

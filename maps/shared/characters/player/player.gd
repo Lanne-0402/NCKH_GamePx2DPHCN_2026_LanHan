@@ -1,4 +1,5 @@
 extends CharacterBody2D
+const VisualPace = preload("res://ui/shared/visual_pace.gd")
 
 # Lực nhảy (Số âm vì trong game 2D, trục Y hướng lên trên là số âm)
 const JUMP_VELOCITY = -400.0
@@ -44,11 +45,11 @@ func _process(delta: float) -> void:
 	mk2.visual_active = session != null and session.state == ExerciseSession.State.ACTIVE
 	mk2.running = _running
 	if mk2.visual_active:
-		mk2.advance(delta)
+		mk2.advance(delta * VisualPace.factor())
 	else:
 		mk2.refresh()
 	if _running:
-		_run_clock += delta
+		_run_clock += delta * VisualPace.factor()
 		var stride := sin(_run_clock * 12.0)
 		visuals.position.y = -absf(stride) * 3.0
 		arm_left.rotation = stride * 0.12
@@ -86,8 +87,8 @@ func play_exercise_action() -> void:
 	mk2.amount = 1.0
 	mk2.refresh()
 	_action_tween = create_tween()
-	_action_tween.tween_interval(0.25)
-	_action_tween.tween_property(mk2,"amount",0.0,0.2)
+	_action_tween.tween_interval(VisualPace.duration(0.25))
+	_action_tween.tween_property(mk2,"amount",0.0,VisualPace.duration(0.2))
 	_action_tween.tween_callback(mk2.refresh)
 
 func set_running(enabled: bool) -> void:

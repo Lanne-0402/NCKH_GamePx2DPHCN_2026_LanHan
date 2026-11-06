@@ -110,6 +110,11 @@ func start_session(session_config: Dictionary) -> bool:
 	return true
 
 
+func _exit_tree() -> void:
+	if _session_started:
+		stop_session("scene_exiting")
+
+
 func stop_session(reason := "user_cancelled") -> void:
 	if not _session_started:
 		return
@@ -284,7 +289,11 @@ func _on_tracking_status_changed(data: Dictionary) -> void:
 		_state_before_tracking_loss = state
 		_pose_input.pause_exercise("tracking_lost")
 		_change_state(State.TRACKING_LOST)
-		feedback_changed.emit("TRACKING_LOST")
+		var fb_code := str(data.get("feedback_code", ""))
+		if fb_code == "CAMERA_DISCONNECTED":
+			feedback_changed.emit("CAMERA_DISCONNECTED")
+		else:
+			feedback_changed.emit("TRACKING_LOST")
 	elif tracking_ok and state == State.TRACKING_LOST:
 		if _state_before_tracking_loss == State.RESTING:
 			_change_state(State.RESTING)
@@ -296,7 +305,11 @@ func _on_tracking_status_changed(data: Dictionary) -> void:
 			else:
 				_pose_input.pause_exercise("waiting_for_action_zone")
 			_change_state(State.ACTIVE)
-		feedback_changed.emit("TRACKING_RESTORED")
+		var fb_restored := str(data.get("feedback_code", ""))
+		if fb_restored == "CAMERA_RECONNECTED":
+			feedback_changed.emit("CAMERA_RECONNECTED")
+		else:
+			feedback_changed.emit("TRACKING_RESTORED")
 
 
 func _on_connection_changed(connected: bool, _details: Dictionary) -> void:

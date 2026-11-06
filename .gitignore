@@ -32,3 +32,15 @@ tests/visual/captures/
 # Backup folders
 -NCKH-*/
 *-backup*/
+
+# Exported Releases & Portable Bundles
+GamePHCN_Portable/
+GamePHCN_ThuNghiem.zip
+*.zip
+
+# Security & Database Credentials
+cloud_config.json
+mongodb_config.json
+.env
+*.key
+
